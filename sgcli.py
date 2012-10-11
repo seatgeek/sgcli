@@ -24,7 +24,7 @@ WIDTH = 80
 
 
 def main(stdscr):
-    stdscr.keypad(0)
+    stdscr.keypad(1)
     curses.curs_set(0)
     curses.init_pair(1, curses.COLOR_BLUE, curses.COLOR_BLACK)
 
@@ -143,7 +143,7 @@ def results_page(stdscr, query, events, page_number, result_number):
                 result_number = 0
                 page_number += 1
             return results_page(stdscr, query, events, page_number, result_number)
-        elif ev in (ord("p"), curses.KEY_DOWN):
+        elif ev in (ord("p"), curses.KEY_UP):
             if result_number > 0:
                 result_number -= 1
             elif page_number > 0:
@@ -181,11 +181,13 @@ def draw_logo(stdscr):
     stdscr.addstr(15, x + 24, "          ,;;;;;;;        ")
 
 
-def quit(stdscr):
+def quit(stdscr, message=None):
     stdscr.clear()
     stdscr.border()
     draw_logo(stdscr)
     centered(stdscr, 19, "Seat you later!")
+    if message:
+        centered(stdscr, 20, message)
     stdscr.refresh()
 
 
