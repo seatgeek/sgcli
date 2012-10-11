@@ -115,6 +115,11 @@ def draw_event(scr, event, row, highlight):
 
 
 PER_PAGE = 10
+DOWN_KEYS = (ord("n"), ord("k"), curses.KEY_DOWN, 14) # 14 is ^n
+UP_KEYS = (ord("p"), ord("j"), curses.KEY_UP, 16) # 16 is ^p
+LEFT_KEYS = (ord("b"), ord("h"), curses.KEY_LEFT, 2) # 2 is ^b
+RIGHT_KEYS = (ord("f"), ord("l"), curses.KEY_RIGHT, 6) # 6 is ^f
+
 def results_page(stdscr, query, events, page_number, result_number):
     stdscr.clear()
     stdscr.border()
@@ -140,18 +145,28 @@ def results_page(stdscr, query, events, page_number, result_number):
             return search(stdscr)
         elif ev == ord("h"):
             return home(stdscr)
-        elif ev in (ord("n"), curses.KEY_DOWN):
+        elif ev in DOWN_KEYS:
             if (result_number < PER_PAGE - 1) and (PER_PAGE * page_number + result_number < len(events) - 1):
                 result_number += 1
             elif page_number < max_page:
                 result_number = 0
                 page_number += 1
             return results_page(stdscr, query, events, page_number, result_number)
-        elif ev in (ord("p"), curses.KEY_UP):
+        elif ev in UP_KEYS:
             if result_number > 0:
                 result_number -= 1
             elif page_number > 0:
                 result_number = PER_PAGE - 1
+                page_number -= 1
+            return results_page(stdscr, query, events, page_number, result_number)
+        elif ev in RIGHT_KEYS:
+            if page_number < max_page:
+                page_number += 1
+            if (PER_PAGE * page_number + result_number > len(events) - 1):
+                result_number = len(events) - 1 - PER_PAGE * page_number
+            return results_page(stdscr, query, events, page_number, result_number)
+        elif ev in LEFT_KEYS:
+            if page_number > 0:
                 page_number -= 1
             return results_page(stdscr, query, events, page_number, result_number)
 
@@ -209,6 +224,8 @@ def home(stdscr):
             return quit(stdscr)
         elif ev == ord("s"):
             return search(stdscr)
+#        else: # DEBUG FIND KEY CODES
+#            return quit(stdscr, repr(ev))
 
 
 if __name__ == "__main__":
