@@ -7,6 +7,9 @@ from curses.ascii import (isalnum,
 import datetime
 import json
 import os
+import random
+import threading
+import time
 
 import requests
 
@@ -34,13 +37,11 @@ def centered(win, y, message, *args):
     win.addstr(y, (WIDTH - len(message)) / 2, message, *args)
 
 
-def search(stdscr):
+def search(stdscr, input=""):
     stdscr.clear()
     stdscr.border()
     centered(stdscr, 2, "Enter a performer, event or venue:")
     curses.curs_set(2)
-
-    input = ""
 
     while True:
         # Search bar
@@ -64,15 +65,39 @@ def search(stdscr):
     stdscr.refresh()
 
 
-def search_results(stdscr, query):
-    stdscr.clear()
-    stdscr.border()
-    centered(stdscr, 2, "Search results for '%s'" % query)
-    centered(stdscr, 4, "Loading...")
-    stdscr.refresh()
+def loading_thread(screen, ev):
+    dots = []
+    while not ev.is_set():
+        dots.append([1, random.randint(1, WIDTH - 2), "."])
+        dots.append([1, random.randint(1, WIDTH - 2), "*"])
 
+        screen.clear()
+        screen.border()
+
+        for dot in dots:
+            screen.addstr(dot[0], dot[1], dot[2])
+            dot[0] += 1
+        max_y = screen.getmaxyx()[0]
+        dots = [d for d in dots if d[0] < max_y - 1]
+
+        centered(screen, 12, "Loading...")
+        screen.refresh()
+        ev.wait(0.1)
+
+
+def loading(screen):
+    ev = threading.Event()
+    t = threading.Thread(target=loading_thread, args=(screen, ev))
+    t.start()
+    return ev
+
+
+def search_results(stdscr, query):
+    t = loading(stdscr)
     # TODO error handling
     res = json.loads(requests.get("http://api.seatgeek.com/2/events?per_page=100&q=" + query).text)
+    time.sleep(1)
+    t.set()
 
     events = res.get("events", [])
     if not events:
@@ -101,7 +126,10 @@ def draw_event(scr, event, row, highlight):
 
     dt = datetime.datetime.strptime(event["datetime_local"], "%Y-%m-%dT%H:%M:%S")
     date_str = pad(dt.strftime("%%a %%b %d" % dt.day), 10)
-    time_str = pad(dt.strftime("%I:%M %p"), 10, True)
+    if dt.hour == 3 and dt.minute == 30:
+        time_str = pad("Time TBD", 10, True)
+    else:
+        time_str = pad(dt.strftime("%I:%M %p"), 10, True)
 
     scr.addstr(4 + 2 * row, 2, date_str, attrs)
     scr.addstr(5 + 2 * row, 2, time_str, attrs)
@@ -145,6 +173,8 @@ def results_page(stdscr, query, events, page_number, result_number):
             return search(stdscr)
         elif ev == ord("h"):
             return home(stdscr)
+        elif ev in (BS, DEL):
+            return search(stdscr, query)
         elif ev in DOWN_KEYS:
             if (result_number < PER_PAGE - 1) and (PER_PAGE * page_number + result_number < len(events) - 1):
                 result_number += 1
@@ -169,6 +199,31 @@ def results_page(stdscr, query, events, page_number, result_number):
             if page_number > 0:
                 page_number -= 1
             return results_page(stdscr, query, events, page_number, result_number)
+        elif ev == ord("\n"):
+            return event_page(stdscr, query, events, page_number, result_number)
+
+
+def event_page(screen, query, events, page_number, result_number):
+#    t = loading(screen)
+    # TODO error handling
+    res = json.loads(requests.get("http://seatgeek.com/event/listings?id=" + event["id"]).text)
+#    t.set()
+    quit(screen, "DONE")
+
+    listings = res["listings"]
+
+    
+
+    while True:
+        ev = screen.getch()
+        if ev in (ord("q"), ESC):
+            return quit(screen)
+        elif ev == ord("s"):
+            return search(screen)
+        elif ev == ord("h"):
+            return home(screen)
+        elif ev in (BS, DEL):
+            return results_page(screen, query, events, page_number, result_number)
 
 
 def draw_logo(stdscr):
@@ -202,7 +257,6 @@ def draw_logo(stdscr):
 
 def quit(stdscr, message=None):
     stdscr.clear()
-    stdscr.border()
     draw_logo(stdscr)
     centered(stdscr, 19, "Seat you later!")
     if message:
