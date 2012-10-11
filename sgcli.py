@@ -115,7 +115,7 @@ def results_page(stdscr, query, events, page_number, result_number):
     stdscr.clear()
     stdscr.border()
 
-    max_page = len(events) / PER_PAGE
+    max_page = (len(events) - 1) / PER_PAGE
     if page_number > max_page or page_number < 0:
         raise Exception("Bad page # %s" % page_number)
 
