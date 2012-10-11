@@ -106,7 +106,11 @@ def draw_event(scr, event, row, highlight):
     scr.addstr(4 + 2 * row, 2, date_str, attrs)
     scr.addstr(5 + 2 * row, 2, time_str, attrs)
     scr.addstr(4 + 2 * row, 13, pad(event["title"], 65), attrs)
-    byline = "  " + event["venue"]["name"] + " - " + event["venue"]["city"] + ", " + event["venue"]["state"]
+    byline = "  " + event["venue"]["name"]
+    state = event["venue"]["state"]
+    if not state or event["venue"]["country"] != "US":
+        state = event["venue"]["country"]
+    byline += " - " + event["venue"]["city"] + ", " + state
     scr.addstr(5 + 2 * row, 13, pad(byline, 65), attrs)
 
 
