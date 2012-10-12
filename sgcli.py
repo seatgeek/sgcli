@@ -41,7 +41,7 @@ def main(stdscr):
 
 
 def centered(win, y, message, *args):
-    win.addstr(y, (WIDTH - len(message)) / 2, message, *args)
+    win.addstr(y, int((WIDTH - len(message)) / 2), message, *args)
 
 
 def search(stdscr, input=""):
@@ -349,9 +349,22 @@ def listings_page(previous_args, screen, event, listings, page_number, result_nu
             if page_number > 0:
                 page_number -= 1
         elif ev == ord("\n"):
-            raise Exception("TODO")
+            previous_args = [previous_args, screen, event, listings, page_number, result_number]
+            return listing_page(previous_args, screen, event, listing)
         return listings_page(previous_args, screen, event, listings, page_number, result_number)
 
+
+def listing_page(previous_args, screen, event, listing):
+    draw_event_header(screen, event)
+    centered(screen, 4, "%s tickets in Section %s, Row %s" % (listing["q"],
+                                                              listing["s"].title(),
+                                                              listing["r"].title()))
+    centered(screen, 5, "$%s base + $%s fees & shipping = $%s each" % (listing["p"], listing["pf"] - listing["p"], listing["pf"]))
+
+    screen.refresh()
+
+    while True:
+        ev = screen.getch()
 
 
 def draw_logo(stdscr):
