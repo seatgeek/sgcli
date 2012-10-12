@@ -8,5 +8,5 @@ setup(name='SG',
       author='Mike Dirolf',
       author_email='mike@dirolf.com',
       url='http://github.com/mdirolf/sgcli',
-      scripts=['sgcli'],
+      scripts=['sg'],
      )
