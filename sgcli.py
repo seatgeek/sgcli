@@ -392,13 +392,36 @@ def which(program):
 
 
 def listing_page(previous_args, screen, event, listing):
+    map_image = None
+    ga = False
+    no_map = False
+
+    if event.get("general_admission"):
+        ga = True
+    else:
+        map_image = "http://seatgeek.com/event/static_map_image?width=320&height=320&event_id=%s&section=%s" % (event["id"], listing["s"])
+
+        (ev, t) = loading(screen)
+        # TODO error handling
+        res = requests.get(map_image)
+        ev.set()
+        t.join()
+
     draw_event_header(screen, event)
     centered(screen, 4, "%s tickets in Section %s, Row %s" % (listing["q"],
                                                               listing["s"].title(),
                                                               listing["r"].title()))
     centered(screen, 5, "$%s base + $%s fees & shipping = $%s each. (b)uy on %s" % (listing["p"], listing["pf"] - listing["p"], listing["pf"], listing["m"]))
     if listing["d"]:
-        centered(screen, 6, listing["d"])
+        centered(screen, 6, listing["d"][:WIDTH-2])
+
+    if ga:
+        centered(screen, 12, "General Admission Show")
+        centered(screen, 13, "This show does not have assigned seating.")
+    elif no_map:
+        centered(screen, 12, "Seating Chart Unavailable")
+    else:
+        pass
 
     screen.refresh()
 
@@ -419,12 +442,6 @@ def listing_page(previous_args, screen, event, listing):
         elif ev in (ord("b"), ord("w")):
             browse(link, ev == ord("b"))
             return post_purchase(screen, previous_args)
-
-
-#-_-_-_-_-_-_-_
-#_-_-_-_-_-_-_-
-#-_-_-_-_-_-_-~
-#_-_-_-_-_-_-_-
 
 
 def post_purchase(screen, previous_args):
@@ -563,6 +580,12 @@ def home(stdscr):
             return search(stdscr)
         elif ev == ord("t"):
             return post_purchase(stdscr, [])
+        elif ev == ord("a"):
+            return listing_page([], stdscr, {u'stats': {u'listing_count': 6644, u'average_price': 321.94, u'lowest_price': 46.0, u'highest_price': 12102.0}, u'links': [], u'performers': [{u'home_team': True, u'name': u'New York Yankees', u'short_name': u'Yankees', u'url': u'http://seatgeek.com/new-york-yankees-tickets/', u'image': u'http://cdn.seatgeek.com/images/performers/8/new-york-yankees-1a4323/huge.jpg', u'primary': True, u'id': 8, u'score': 0.81294999999999995, u'images': {u'small': u'http://cdn.seatgeek.com/images/performers/8/new-york-yankees-777201/small.jpg', u'huge': u'http://cdn.seatgeek.com/images/performers/8/new-york-yankees-1a4323/huge.jpg', u'large': u'http://cdn.seatgeek.com/images/performers/8/new-york-yankees-a5647b/large.jpg'}, u'type': u'mlb', u'slug': u'new-york-yankees'}], u'url': u'http://seatgeek.com/tbd-yankees-tickets/10-14-2012-bronx-new-york-yankee-stadium/mlb/1022833/', u'datetime_local': u'2012-10-14T03:30:00', u'title': u'ALCS: TBD at New York Yankees - Home Game 2', u'venue': {u'city': u'Bronx', u'extended_address': None, u'links': [], u'url': u'http://seatgeek.com/yankee-stadium-seating-chart/', u'country': u'US', u'id': 8, u'state': u'NY', u'score': 0.93030000000000002, u'postal_code': u'10452', u'location': {u'lat': 40.827800000000003, u'lon': -73.927599999999998}, u'address': u'1 East 161st Street', u'slug': u'yankee-stadium', u'name': u'Yankee Stadium'}, u'datetime_tbd': True, u'short_title': u'ALCS: TBD at New York Yankees - Home Game 2', u'datetime_utc': u'2012-10-14T07:30:00', u'score': 0.85823000000000005, u'taxonomies': [{u'parent_id': None, u'id': 1000000, u'name': u'sports'}, {u'parent_id': 1000000, u'id': 1010000, u'name': u'baseball'}, {u'parent_id': 1010000, u'id': 1010100, u'name': u'mlb'}], u'type': u'mlb', u'id': 1022833}, {u'sp': [2, 4], u'd': u'This is Cafe Seating: you will be seated at bar stools with a drink rail. These tickets are available for email delivery', u'f': 50.5, u'pu': 0, u'm': u'razorgator', u'mk': None, u'sh': 4.2374999999999998, u'q': 4, u'p': 202, u's': u'field 118', u'r': u'28 s', u'pf': 257, u'pk': 0, u'et': 1, u'b': 1, u'sg': u"We don't recognize the row listed for this ticket, so we're displaying it in the last row of this section.", u'id': u'mT301STq%2fd43oJj98rbhAUtCy0sKzYyl', u'dq': 82})
+        elif ev == ord("b"):
+            return listing_page([], stdscr, {"stats":{"listing_count":14,"average_price":70.43,"lowest_price":37,"highest_price":108},"links":[],"title":"Other Lives with Indians","url":"http://seatgeek.com/other-lives-with-indians-tickets/new-york-new-york-bowery-ballroom-2012-11-28-8-pm/concert/934747/","type":"concert","performers":[{"short_name":"Other Lives","url":"http://seatgeek.com/other-lives-tickets/","image":"http://cdn.seatgeek.com/images/performers/9736/other-lives-2b22f2/huge.jpg","primary":True,"slug":"other-lives","score":0.69347,"images":{"huge":"http://cdn.seatgeek.com/images/performers/9736/other-lives-2b22f2/huge.jpg"},"type":"band","id":9736,"name":"Other Lives"},{"short_name":"Indians","url":"http://seatgeek.com/indians-tickets/","image":None,"slug":"indians","score":0,"images":[],"type":"band","id":24934,"name":"Indians"}],"venue":{"city":"New York","extended_address":None,"links":[],"url":"http://seatgeek.com/bowery-ballroom-seating-chart/","country":"US","slug":"bowery-ballroom","state":"NY","score":0.54747,"postal_code":"10002","location":{"lat":40.72,"lon":-73.99},"address":"6 Delancey Street","id":719,"name":"Bowery Ballroom"},"short_title":"Other Lives with Indians","general_admission":True,"datetime_utc":"2012-11-29T01:00:00","score":0.63996,"datetime_local":"2012-11-28T20:00:00","taxonomies":[{"parent_id":None,"id":2000000,"name":"concert"}],"datetime_tbd":False,"id":934747}, {u'sp': [2, 4], u'd': u'This is Cafe Seating: you will be seated at bar stools with a drink rail. These tickets are available for email delivery', u'f': 50.5, u'pu': 0, u'm': u'razorgator', u'mk': None, u'sh': 4.2374999999999998, u'q': 4, u'p': 202, u's': u'field 118', u'r': u'28 s', u'pf': 257, u'pk': 0, u'et': 1, u'b': 1, u'sg': u"We don't recognize the row listed for this ticket, so we're displaying it in the last row of this section.", u'id': u'mT301STq%2fd43oJj98rbhAUtCy0sKzYyl', u'dq': 82})
+        elif ev == ord("c"):
+            return listing_page([], stdscr, {"stats":{"listing_count":None,"average_price":None,"lowest_price":None,"highest_price":None},"links":[],"title":"Jon McLaughlin","url":"http://seatgeek.com/jon-mclaughlin-tickets/northampton-massachusetts-iron-horse-music-hall-2012-10-16-3-30-am/concert/998449/","type":"concert","performers":[{"short_name":"Jon McLaughlin","url":"http://seatgeek.com/jon-mclaughlin-tickets/","image":"http://cdn.seatgeek.com/images/performers/991/jon-mclaughlin-c6da68/huge.jpg","primary":True,"slug":"jon-mclaughlin","score":0.29364,"images":{"small":"http://cdn.seatgeek.com/images/performers/991/jon-mclaughlin-a8be17/small.jpg","huge":"http://cdn.seatgeek.com/images/performers/991/jon-mclaughlin-c6da68/huge.jpg","large":"http://cdn.seatgeek.com/images/performers/991/jon-mclaughlin-d631fd/large.jpg","medium":"http://cdn.seatgeek.com/images/performers/991/jon-mclaughlin-f13c65/medium.jpg"},"type":"band","id":991,"name":"Jon McLaughlin"}],"venue":{"city":"Northampton","extended_address":None,"links":[],"url":"http://seatgeek.com/iron-horse-music-hall-seating-chart/","country":"US","slug":"iron-horse-music-hall","state":"MA","score":0,"postal_code":"01060","location":{"lat":42.32,"lon":-72.63},"address":"20 Center Street","id":2155,"name":"Iron Horse Music Hall"},"short_title":"Jon McLaughlin","datetime_utc":"2012-10-16T07:30:00","score":0.27034,"datetime_local":"2012-10-16T03:30:00","taxonomies":[{"parent_id":None,"id":2000000,"name":"concert"}],"datetime_tbd":False,"id":998449}, {u'sp': [2, 4], u'd': u'This is Cafe Seating: you will be seated at bar stools with a drink rail. These tickets are available for email delivery', u'f': 50.5, u'pu': 0, u'm': u'razorgator', u'mk': None, u'sh': 4.2374999999999998, u'q': 4, u'p': 202, u's': u'field 118', u'r': u'28 s', u'pf': 257, u'pk': 0, u'et': 1, u'b': 1, u'sg': u"We don't recognize the row listed for this ticket, so we're displaying it in the last row of this section.", u'id': u'mT301STq%2fd43oJj98rbhAUtCy0sKzYyl', u'dq': 82})
 #        else: # DEBUG FIND KEY CODES
 #            return quit(stdscr, repr(ev))
 
