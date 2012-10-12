@@ -396,7 +396,9 @@ def listing_page(previous_args, screen, event, listing):
     centered(screen, 4, "%s tickets in Section %s, Row %s" % (listing["q"],
                                                               listing["s"].title(),
                                                               listing["r"].title()))
-    centered(screen, 5, "$%s base + $%s fees & shipping = $%s each. (b)uy?" % (listing["p"], listing["pf"] - listing["p"], listing["pf"]))
+    centered(screen, 5, "$%s base + $%s fees & shipping = $%s each. (b)uy on %s" % (listing["p"], listing["pf"] - listing["p"], listing["pf"], listing["m"]))
+    if listing["d"]:
+        centered(screen, 6, listing["d"])
 
     screen.refresh()
 
