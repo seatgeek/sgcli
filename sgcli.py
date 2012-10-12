@@ -302,22 +302,23 @@ def grouped(listings):
         key += "--%s" % l["q"]
         if key not in grouped:
             grouped[key] = l
-    return sorted(grouped.values(), key=lambda x: x["dq"], reverse=True)
+    return sorted(grouped.values(), key=lambda x: x.get("dq"), reverse=True)
 
 
 def draw_listing(screen, listing, row, highlight):
     attrs = 0
     if highlight:
         attrs = curses.A_REVERSE
-    elif listing["b"] in (0, 1):
+    elif listing.get("b") in (0, 1):
         attrs = curses.color_pair(2)
-    elif listing["b"] == 2:
+    elif listing.get("b") == 2:
         attrs = curses.color_pair(4)
-    else:
+    elif "b" in listing:
         attrs = curses.color_pair(5)
 
     addstr(screen, 5 + 2 * row, 2, " " * (WIDTH - 4), attrs)
-    addstr(screen, 5 + 2 * row, 3, "(%d)" % listing["dq"], attrs)
+    if "dq" in listing:
+        addstr(screen, 5 + 2 * row, 3, "(%d)" % listing["dq"], attrs)
     addstr(screen, 5 + 2 * row, 8, (listing["s"] + " - row " + listing["r"]).title(), attrs)
     addstr(screen, 5 + 2 * row, WIDTH - 15, pad(str(listing["q"]), 2, True) + pad((listing["et"] and " etix" or " tix"), 7), attrs)
     addstr(screen, 5 + 2 * row, WIDTH - 7, pad("$" + str(listing["pf"]), 4, True), attrs)
@@ -488,7 +489,7 @@ def listing_page(previous_args, screen, event, listing):
 
     screen.refresh()
 
-    link = "http://seatgeek.com/event/click/?tid=%s&eid=%s&section=%s&row=%s&quantity=%s&price=%s&baseprice=%s&market=%s&sg=0&dq=%s" % (listing["id"], event["id"], listing["s"], listing["r"], listing["q"], listing["pf"], listing["p"], listing["m"], listing["dq"])
+    link = "http://seatgeek.com/event/click/?tid=%s&eid=%s&section=%s&row=%s&quantity=%s&price=%s&baseprice=%s&market=%s&sg=0&dq=%s" % (listing["id"], event["id"], listing["s"], listing["r"], listing["q"], listing["pf"], listing["p"], listing["m"], listing.get("dq",0))
 
     while True:
         ev = screen.getch()
