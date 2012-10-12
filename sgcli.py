@@ -1,3 +1,5 @@
+import bisect
+import cStringIO
 import curses
 from curses.ascii import (isalnum,
                           BS,
@@ -13,6 +15,7 @@ import threading
 import time
 import webbrowser
 
+from PIL import Image
 import requests
 
 
@@ -399,13 +402,18 @@ def listing_page(previous_args, screen, event, listing):
     if event.get("general_admission"):
         ga = True
     else:
+        # Load the map and check if it's an actual map
         map_image = "http://seatgeek.com/event/static_map_image?width=320&height=320&event_id=%s&section=%s" % (event["id"], listing["s"])
 
         (ev, t) = loading(screen)
         # TODO error handling
-        res = requests.get(map_image)
+        map_image = requests.get(map_image)
         ev.set()
         t.join()
+
+        if "v2155/concert/1/1" in map_image.url:
+            map_image = None
+            no_map = True
 
     draw_event_header(screen, event)
     centered(screen, 4, "%s tickets in Section %s, Row %s" % (listing["q"],
@@ -421,7 +429,32 @@ def listing_page(previous_args, screen, event, listing):
     elif no_map:
         centered(screen, 12, "Seating Chart Unavailable")
     else:
-        pass
+        # Let's draw the MAP!
+        # Font stretch is approx 9x20
+        # Given height limit of ~20, we want width of 45
+
+        max_width = WIDTH - 2
+        max_height = HEIGHT - 9
+
+        width_limited_height = max_width * 9 / 20
+        if width_limited_height < max_height:
+            width, height = max_width, width_limited_height
+        else:
+            width, height = max_height * 20 / 9, max_height
+
+        img = Image.open(cStringIO.StringIO(map_image.content))
+        characters = "#X=*+-. "
+        bounds = [32, 64, 96, 128, 160, 192, 224]
+
+        img = img.resize((width, height),Image.BILINEAR)
+        img = img.convert("L") # convert to mono
+
+        for y in range(0, img.size[1]):
+            str=""
+            for x in range(0, img.size[0]):
+                lum = 255 - img.getpixel((x,y))
+                str += characters[bisect.bisect(bounds, lum)]
+            centered(screen, 8 + y, str)
 
     screen.refresh()
 
