@@ -113,12 +113,14 @@ def loading(screen, message="Loading..."):
 
 def search_results(stdscr, query):
     (ev, t) = loading(stdscr)
-    # TODO error handling
-    res = json.loads(requests.get("http://api.seatgeek.com/2/events?per_page=100&q=" + query).text)
+    try:
+        res = json.loads(requests.get("http://api.seatgeek.com/2/events?per_page=100&q=" + query).text)
+        events = res.get("events", [])
+    except:
+        events = []
     ev.set()
     t.join()
 
-    events = res.get("events", [])
     if not events:
         stdscr.clear()
         stdscr.border()
@@ -244,12 +246,14 @@ def event_page(screen, query, events, page_number, result_number):
     event = events[PER_PAGE * page_number + result_number]
 
     (ev, t) = loading(screen, "Searching the web's ticket sites...")
-    # TODO error handling
-    res = json.loads(requests.get("http://seatgeek.com/event/listings?id=%d&calculate_coords=1" % event["id"]).text)
+    try:
+        res = json.loads(requests.get("http://seatgeek.com/event/listings?id=%d&calculate_coords=1" % event["id"]).text)
+        listings = res["listings"]
+    except:
+        listings = []
     ev.set()
     t.join()
 
-    listings = res["listings"]
     if not listings:
         draw_event_header(screen, event)
         centered(screen, 4, "Shoot. No listings found :(. Here's a bunny.")
@@ -296,7 +300,7 @@ def grouped(listings, fixed_quantity=0):
     for l in listings:
         if fixed_quantity and fixed_quantity not in l.get("sp", []):
             continue
-        key = l.get("mk") or "%s_%s" % (l["s"], l["r"])
+        key = l.get("mk") or "%s_%s" % (l["s"], l.get("r", "none"))
         if not fixed_quantity:
             key += "--%s" % l["q"]
         if key not in grouped:
@@ -318,7 +322,7 @@ def draw_listing(screen, listing, row, highlight):
     addstr(screen, 5 + 2 * row, 2, " " * (WIDTH - 4), attrs)
     if listing.get("dq"):
         addstr(screen, 5 + 2 * row, 3, "(%d)" % listing["dq"], attrs)
-    addstr(screen, 5 + 2 * row, 8, (listing["s"] + " - row " + listing["r"]).title(), attrs)
+    addstr(screen, 5 + 2 * row, 8, (listing["s"] + " - row " + listing.get("r", "none")).title(), attrs)
     addstr(screen, 5 + 2 * row, WIDTH - 15, pad(str(listing["q"]), 2, True) + pad((listing["et"] and " etix" or " tix"), 7), attrs)
     addstr(screen, 5 + 2 * row, WIDTH - 7, pad("$" + str(listing["pf"]), 4, True), attrs)
 
@@ -417,19 +421,23 @@ def listing_page(previous_args, screen, event, listing):
         map_image = "http://seatgeek.com/event/static_map_image?width=320&height=320&event_id=%s" % (event["id"])
 
         (ev, t) = loading(screen)
-        # TODO error handling
-        map_image = requests.get(map_image)
-        ev.set()
-        t.join()
+        try:
+            map_image = requests.get(map_image)
+            if "v2155/concert/1/1" in map_image.url:
+                map_image = None
+                no_map = True
 
-        if "v2155/concert/1/1" in map_image.url:
+        except:
             map_image = None
             no_map = True
+
+        ev.set()
+        t.join()
 
     draw_event_header(screen, event)
     centered(screen, 4, "%s tickets in Section %s, Row %s" % (listing["q"],
                                                               listing["s"].title(),
-                                                              listing["r"].title()))
+                                                              listing.get("r", "none").title()))
     centered(screen, 5, "$%s base + $%s fees & shipping = $%s each. (b)uy on %s" % (listing["p"], listing["pf"] - listing["p"], listing["pf"], listing["m"]))
     if listing["d"]:
         centered(screen, 6, listing["d"][:WIDTH-2])
@@ -497,7 +505,7 @@ def listing_page(previous_args, screen, event, listing):
 
     screen.refresh()
 
-    link = "http://seatgeek.com/event/click/?tid=%s&eid=%s&section=%s&row=%s&quantity=%s&price=%s&baseprice=%s&market=%s&sg=0&dq=%s" % (listing["id"], event["id"], listing["s"], listing["r"], listing["q"], listing["pf"], listing["p"], listing["m"], listing.get("dq",0))
+    link = "http://seatgeek.com/event/click/?tid=%s&eid=%s&section=%s&row=%s&quantity=%s&price=%s&baseprice=%s&market=%s&sg=0&dq=%s" % (listing["id"], event["id"], listing["s"], listing.get("r", "none"), listing["q"], listing["pf"], listing["p"], listing["m"], listing.get("dq",0))
 
     while True:
         ev = screen.getch()
