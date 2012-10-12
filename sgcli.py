@@ -15,7 +15,8 @@ import threading
 import time
 import webbrowser
 
-from PIL import Image
+from PIL import (Image,
+                 ImageOps)
 import requests
 
 
@@ -49,6 +50,7 @@ def main(stdscr):
     curses.init_pair(3, curses.COLOR_CYAN, curses.COLOR_BLACK)
     curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK)
     curses.init_pair(5, curses.COLOR_RED, curses.COLOR_BLACK)
+    curses.init_pair(6, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
 
     home(stdscr)
 
@@ -245,7 +247,7 @@ def event_page(screen, query, events, page_number, result_number):
 
     (ev, t) = loading(screen, "Searching the web's ticket sites...")
     # TODO error handling
-    res = json.loads(requests.get("http://seatgeek.com/event/listings?id=%d" % event["id"]).text)
+    res = json.loads(requests.get("http://seatgeek.com/event/listings?id=%d&calculate_coords=1" % event["id"]).text)
     ev.set()
     t.join()
 
@@ -403,7 +405,7 @@ def listing_page(previous_args, screen, event, listing):
         ga = True
     else:
         # Load the map and check if it's an actual map
-        map_image = "http://seatgeek.com/event/static_map_image?width=320&height=320&event_id=%s&section=%s" % (event["id"], listing["s"])
+        map_image = "http://seatgeek.com/event/static_map_image?width=320&height=320&event_id=%s" % (event["id"])
 
         (ev, t) = loading(screen)
         # TODO error handling
@@ -447,14 +449,42 @@ def listing_page(previous_args, screen, event, listing):
         bounds = [32, 64, 96, 128, 160, 192, 224]
 
         img = img.resize((width, height),Image.BILINEAR)
-        img = img.convert("L") # convert to mono
+        bw = img.copy()
+        bw = bw.convert("L") # convert to mono
 
+        img = ImageOps.posterize(img.convert("RGB"), 1)
+
+        start_x = (WIDTH - width) / 2
         for y in range(0, img.size[1]):
             str=""
             for x in range(0, img.size[0]):
-                lum = 255 - img.getpixel((x,y))
-                str += characters[bisect.bisect(bounds, lum)]
-            centered(screen, 8 + y, str)
+                lum = 255 - bw.getpixel((x,y))
+                c = characters[bisect.bisect(bounds, lum)]
+                color_num={(0,0,0): 0,
+                           (0,0,128): 1,
+                           (0,128,0): 2,
+                           (0,128,128): 3,
+                           (128,0,0): 5,
+                           (128,0,128): 6,
+                           (128,128,0): 4,
+                           (128,128,128): 0}[img.getpixel((x,y))]
+                addstr(screen, 8 + y, start_x + x, c, curses.color_pair(color_num))
+                str += c
+
+        # Draw the marker
+        x = width * listing["co"]["x"] / 1000 + start_x
+        y = height * listing["co"]["y"] / 1000 + 8
+        addstr(screen, y, x, "O", curses.color_pair(1))
+
+        addstr(screen, y, x+1, "|", curses.color_pair(1))
+        addstr(screen, y, x-1, "|", curses.color_pair(1))
+        addstr(screen, y+1, x+1, "/", curses.color_pair(1))
+        addstr(screen, y+1, x-1, "\\", curses.color_pair(1))
+        addstr(screen, y-1, x+1, "\\", curses.color_pair(1))
+        addstr(screen, y-1, x-1, "/", curses.color_pair(1))
+        addstr(screen, y-1, x, " ", curses.color_pair(1))
+        addstr(screen, y-2, x, "_", curses.color_pair(1))
+        addstr(screen, y+1, x, "_", curses.color_pair(1))
 
     screen.refresh()
 
@@ -614,7 +644,7 @@ def home(stdscr):
         elif ev == ord("t"):
             return post_purchase(stdscr, [])
         elif ev == ord("a"):
-            return listing_page([], stdscr, {u'stats': {u'listing_count': 6644, u'average_price': 321.94, u'lowest_price': 46.0, u'highest_price': 12102.0}, u'links': [], u'performers': [{u'home_team': True, u'name': u'New York Yankees', u'short_name': u'Yankees', u'url': u'http://seatgeek.com/new-york-yankees-tickets/', u'image': u'http://cdn.seatgeek.com/images/performers/8/new-york-yankees-1a4323/huge.jpg', u'primary': True, u'id': 8, u'score': 0.81294999999999995, u'images': {u'small': u'http://cdn.seatgeek.com/images/performers/8/new-york-yankees-777201/small.jpg', u'huge': u'http://cdn.seatgeek.com/images/performers/8/new-york-yankees-1a4323/huge.jpg', u'large': u'http://cdn.seatgeek.com/images/performers/8/new-york-yankees-a5647b/large.jpg'}, u'type': u'mlb', u'slug': u'new-york-yankees'}], u'url': u'http://seatgeek.com/tbd-yankees-tickets/10-14-2012-bronx-new-york-yankee-stadium/mlb/1022833/', u'datetime_local': u'2012-10-14T03:30:00', u'title': u'ALCS: TBD at New York Yankees - Home Game 2', u'venue': {u'city': u'Bronx', u'extended_address': None, u'links': [], u'url': u'http://seatgeek.com/yankee-stadium-seating-chart/', u'country': u'US', u'id': 8, u'state': u'NY', u'score': 0.93030000000000002, u'postal_code': u'10452', u'location': {u'lat': 40.827800000000003, u'lon': -73.927599999999998}, u'address': u'1 East 161st Street', u'slug': u'yankee-stadium', u'name': u'Yankee Stadium'}, u'datetime_tbd': True, u'short_title': u'ALCS: TBD at New York Yankees - Home Game 2', u'datetime_utc': u'2012-10-14T07:30:00', u'score': 0.85823000000000005, u'taxonomies': [{u'parent_id': None, u'id': 1000000, u'name': u'sports'}, {u'parent_id': 1000000, u'id': 1010000, u'name': u'baseball'}, {u'parent_id': 1010000, u'id': 1010100, u'name': u'mlb'}], u'type': u'mlb', u'id': 1022833}, {u'sp': [2, 4], u'd': u'This is Cafe Seating: you will be seated at bar stools with a drink rail. These tickets are available for email delivery', u'f': 50.5, u'pu': 0, u'm': u'razorgator', u'mk': None, u'sh': 4.2374999999999998, u'q': 4, u'p': 202, u's': u'field 118', u'r': u'28 s', u'pf': 257, u'pk': 0, u'et': 1, u'b': 1, u'sg': u"We don't recognize the row listed for this ticket, so we're displaying it in the last row of this section.", u'id': u'mT301STq%2fd43oJj98rbhAUtCy0sKzYyl', u'dq': 82})
+            return listing_page([], stdscr, {u'stats': {u'listing_count': 6644, u'average_price': 321.94, u'lowest_price': 46.0, u'highest_price': 12102.0}, u'links': [], u'performers': [{u'home_team': True, u'name': u'New York Yankees', u'short_name': u'Yankees', u'url': u'http://seatgeek.com/new-york-yankees-tickets/', u'image': u'http://cdn.seatgeek.com/images/performers/8/new-york-yankees-1a4323/huge.jpg', u'primary': True, u'id': 8, u'score': 0.81294999999999995, u'images': {u'small': u'http://cdn.seatgeek.com/images/performers/8/new-york-yankees-777201/small.jpg', u'huge': u'http://cdn.seatgeek.com/images/performers/8/new-york-yankees-1a4323/huge.jpg', u'large': u'http://cdn.seatgeek.com/images/performers/8/new-york-yankees-a5647b/large.jpg'}, u'type': u'mlb', u'slug': u'new-york-yankees'}], u'url': u'http://seatgeek.com/tbd-yankees-tickets/10-14-2012-bronx-new-york-yankee-stadium/mlb/1022833/', u'datetime_local': u'2012-10-14T03:30:00', u'title': u'ALCS: TBD at New York Yankees - Home Game 2', u'venue': {u'city': u'Bronx', u'extended_address': None, u'links': [], u'url': u'http://seatgeek.com/yankee-stadium-seating-chart/', u'country': u'US', u'id': 8, u'state': u'NY', u'score': 0.93030000000000002, u'postal_code': u'10452', u'location': {u'lat': 40.827800000000003, u'lon': -73.927599999999998}, u'address': u'1 East 161st Street', u'slug': u'yankee-stadium', u'name': u'Yankee Stadium'}, u'datetime_tbd': True, u'short_title': u'ALCS: TBD at New York Yankees - Home Game 2', u'datetime_utc': u'2012-10-14T07:30:00', u'score': 0.85823000000000005, u'taxonomies': [{u'parent_id': None, u'id': 1000000, u'name': u'sports'}, {u'parent_id': 1000000, u'id': 1010000, u'name': u'baseball'}, {u'parent_id': 1010000, u'id': 1010100, u'name': u'mlb'}], u'type': u'mlb', u'id': 1022833}, {"d":"","et":0,"f":0,"id":110739047317,"m":"ebay","mk":"s:bleachers-236 r:3","q":2,"pk":0,"pu":0,"p":542,"pf":542,"r":"3","s":"bleachers 236","sh":0,"sp":[2],"co":{"y":207,"x":306},"dq":0,"b":6})
         elif ev == ord("b"):
             return listing_page([], stdscr, {"stats":{"listing_count":14,"average_price":70.43,"lowest_price":37,"highest_price":108},"links":[],"title":"Other Lives with Indians","url":"http://seatgeek.com/other-lives-with-indians-tickets/new-york-new-york-bowery-ballroom-2012-11-28-8-pm/concert/934747/","type":"concert","performers":[{"short_name":"Other Lives","url":"http://seatgeek.com/other-lives-tickets/","image":"http://cdn.seatgeek.com/images/performers/9736/other-lives-2b22f2/huge.jpg","primary":True,"slug":"other-lives","score":0.69347,"images":{"huge":"http://cdn.seatgeek.com/images/performers/9736/other-lives-2b22f2/huge.jpg"},"type":"band","id":9736,"name":"Other Lives"},{"short_name":"Indians","url":"http://seatgeek.com/indians-tickets/","image":None,"slug":"indians","score":0,"images":[],"type":"band","id":24934,"name":"Indians"}],"venue":{"city":"New York","extended_address":None,"links":[],"url":"http://seatgeek.com/bowery-ballroom-seating-chart/","country":"US","slug":"bowery-ballroom","state":"NY","score":0.54747,"postal_code":"10002","location":{"lat":40.72,"lon":-73.99},"address":"6 Delancey Street","id":719,"name":"Bowery Ballroom"},"short_title":"Other Lives with Indians","general_admission":True,"datetime_utc":"2012-11-29T01:00:00","score":0.63996,"datetime_local":"2012-11-28T20:00:00","taxonomies":[{"parent_id":None,"id":2000000,"name":"concert"}],"datetime_tbd":False,"id":934747}, {u'sp': [2, 4], u'd': u'This is Cafe Seating: you will be seated at bar stools with a drink rail. These tickets are available for email delivery', u'f': 50.5, u'pu': 0, u'm': u'razorgator', u'mk': None, u'sh': 4.2374999999999998, u'q': 4, u'p': 202, u's': u'field 118', u'r': u'28 s', u'pf': 257, u'pk': 0, u'et': 1, u'b': 1, u'sg': u"We don't recognize the row listed for this ticket, so we're displaying it in the last row of this section.", u'id': u'mT301STq%2fd43oJj98rbhAUtCy0sKzYyl', u'dq': 82})
         elif ev == ord("c"):
