@@ -32,6 +32,9 @@ def main(stdscr):
     stdscr.keypad(1)
     curses.curs_set(0)
     curses.init_pair(1, curses.COLOR_BLUE, curses.COLOR_BLACK)
+    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
+    curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+    curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
 
     home(stdscr)
 
@@ -182,26 +185,23 @@ def results_page(stdscr, query, events, page_number, result_number):
             elif page_number < max_page:
                 result_number = 0
                 page_number += 1
-            return results_page(stdscr, query, events, page_number, result_number)
         elif ev in UP_KEYS:
             if result_number > 0:
                 result_number -= 1
             elif page_number > 0:
                 result_number = PER_PAGE - 1
                 page_number -= 1
-            return results_page(stdscr, query, events, page_number, result_number)
         elif ev in RIGHT_KEYS:
             if page_number < max_page:
                 page_number += 1
             if (PER_PAGE * page_number + result_number > len(events) - 1):
                 result_number = len(events) - 1 - PER_PAGE * page_number
-            return results_page(stdscr, query, events, page_number, result_number)
         elif ev in LEFT_KEYS:
             if page_number > 0:
                 page_number -= 1
-            return results_page(stdscr, query, events, page_number, result_number)
         elif ev == ord("\n"):
             return event_page(stdscr, query, events, page_number, result_number)
+        return results_page(stdscr, query, events, page_number, result_number)
 
 
 def draw_event_header(screen, event):
@@ -288,11 +288,18 @@ def draw_listing(screen, listing, row, highlight):
     attrs = 0
     if highlight:
         attrs = curses.A_REVERSE
+    elif listing["b"] < 2:
+        attrs = curses.color_pair(2)
+    elif listing["b"] < 3:
+        attrs = curses.color_pair(3)
+    else:
+        attrs = curses.color_pair(4)
 
-    screen.addstr(5 + 2 * row, 2, str(listing["dq"]), attrs)
-    screen.addstr(5 + 2 * row, 5, (listing["s"] + " - row " + listing["r"]).title(), attrs)
-    screen.addstr(5 + 2 * row, WIDTH - 14, pad(str(listing["q"]), 2, True) + pad((listing["et"] and " etix" or " tix"), 7), attrs)
-    screen.addstr(5 + 2 * row, WIDTH - 6, pad("$" + str(listing["pf"]), 4, True), attrs)
+    screen.addstr(5 + 2 * row, 2, " " * (WIDTH - 4), attrs)
+    screen.addstr(5 + 2 * row, 3, "(%d)" % listing["dq"], attrs)
+    screen.addstr(5 + 2 * row, 8, (listing["s"] + " - row " + listing["r"]).title(), attrs)
+    screen.addstr(5 + 2 * row, WIDTH - 15, pad(str(listing["q"]), 2, True) + pad((listing["et"] and " etix" or " tix"), 7), attrs)
+    screen.addstr(5 + 2 * row, WIDTH - 7, pad("$" + str(listing["pf"]), 4, True), attrs)
 
 
 def listings_page(previous_args, screen, event, listings, page_number, result_number):
@@ -320,6 +327,30 @@ def listings_page(previous_args, screen, event, listings, page_number, result_nu
             return home(screen)
         elif ev in (BS, DEL):
             return event_page(*previous_args)
+        elif ev in DOWN_KEYS:
+            if (result_number < PER_PAGE_2 - 1) and (PER_PAGE_2 * page_number + result_number < len(listings) - 1):
+                result_number += 1
+            elif page_number < max_page:
+                result_number = 0
+                page_number += 1
+        elif ev in UP_KEYS:
+            if result_number > 0:
+                result_number -= 1
+            elif page_number > 0:
+                result_number = PER_PAGE_2 - 1
+                page_number -= 1
+        elif ev in RIGHT_KEYS:
+            if page_number < max_page:
+                page_number += 1
+            if (PER_PAGE_2 * page_number + result_number > len(listings) - 1):
+                result_number = len(listings) - 1 - PER_PAGE_2 * page_number
+        elif ev in LEFT_KEYS:
+            if page_number > 0:
+                page_number -= 1
+        elif ev == ord("\n"):
+            raise Exception("TODO")
+        return listings_page(previous_args, screen, event, listings, page_number, result_number)
+
 
 
 def draw_logo(stdscr):
@@ -328,7 +359,7 @@ def draw_logo(stdscr):
     stdscr.addstr(3, x, "::                  ;   ", curses.color_pair(1))
     stdscr.addstr(4, x, ";,     .;;:  :;;;  ;;;; ", curses.color_pair(1))
     stdscr.addstr(5, x, "`;:    ;  ;` `  ;,  ;   ", curses.color_pair(1))
-    stdscr.addstr(6, x, "  ,;: ,;::;,    :,  ;   ", curses.color_pair(1) | curses.A_BOLD)
+    stdscr.addstr(6, x, "  ,;: ,;::;,    :,  ;   ", curses.color_pair(1))
     stdscr.addstr(7, x, "    ; :,     ,;,:,  ;   ", curses.color_pair(1))
     stdscr.addstr(8, x, "    ; ,;     ;  ;,  ;`  ", curses.color_pair(1))
     stdscr.addstr(9, x, ",:,;,  ;:,:` ;,:,:. ;;, ", curses.color_pair(1))
