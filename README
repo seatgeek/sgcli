@@ -1,0 +1,74 @@
+SGCLI - A command line interface for SeatGeek
+=============================================
+
+What is it?
+-----------
+
+SGCLI is a command line interface for SeatGeek - the most popular
+destination for finding tickets to live events.
+
+Why?
+----
+
+Making the SeatGeek experience available to everyone is key to our
+mission. By catering specifically to users without graphics-capable
+computers, we expose a whole new segment of people to the wonders of
+finding tickets with SeatGeek.
+
+How do I get it?
+----------------
+
+Try `pip install sg` or `easy_install sg`, and then run the command
+`sg`.
+
+Alternatively, just download the `sg` script from this repo and run it
+directly.
+
+What are the dependencies?
+--------------------------
+
+SGCLI depends on `requests` for doing internet-ey things and `PIL` for
+rendering images.
+
+Did you do a double-take when I said rendering images? Well, I was
+serious.
+
+How do I use it?
+----------------
+
+Like any good command line app, SGCLI is full of obscure keyboard
+shortcuts that aren't really documented. Here are some of them that
+work on most pages:
+
+h: Go to the home screen
+s: Start a new search
+q: Quit (with confirmation)
+ESC: Quit (without confirmation)
+BKSP: Go back to the previous page
+
+On the search page, enter text and hit ENTER to run the search. Hit
+ESC to go home.
+
+On pages with data tables, you can navigate using emacs/vim style
+navigation or the arrow keys:
+
+^p / j / UP ARROW: Go up a row
+^n / k / DOWN ARROW: Go down a row
+^b / h / LEFT ARROW: Go to the previous page
+^f / l / RIGHT ARROW: Go to the next page
+
+When you've found a result you like, hit the ENTER key to advance.
+
+When you get to a listing page, you can hit 'b' or 'w' to buy the
+ticket(s). 'b' will attempt to open the market page in a text-mode
+browser, while 'w' will use the default browser.
+
+Are there easter eggs?
+----------------------
+
+Of course.
+
+Can I contribute?
+-----------------
+
+Pull requests are welcome.
