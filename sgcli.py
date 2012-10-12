@@ -207,12 +207,9 @@ def event_page(screen, query, events, page_number, result_number):
 
     t = loading(screen, "Searching the web's ticket sites...")
     # TODO error handling
-#    res = json.loads(requests.get("http://seatgeek.com/event/listings?id=%d" % event["id"]).text)
-#    listings = res["listings"]
-    listings = []
-    time.sleep(0.5)
+    res = json.loads(requests.get("http://seatgeek.com/event/listings?id=%d" % event["id"]).text)
+    listings = res["listings"]
     t.set()
-
 
     screen.clear()
     screen.border()
@@ -251,6 +248,20 @@ def event_page(screen, query, events, page_number, result_number):
         centered(screen, 20, "NMMMM0o00000000000000000000MM0             ")
         centered(screen, 21, "+o0MMMoo000000000000000000NNMNo1^          ")
         centered(screen, 22, "      ^o000000000o000ooooo0000NM0          ")
+        centered(screen, 24, "(h) home  (s) search  (q) quit  (BKSP) back")
+
+        screen.refresh()
+
+        while True:
+            ev = screen.getch()
+            if ev in (ord("q"), ESC):
+                return quit(screen)
+            elif ev == ord("s"):
+                return search(screen)
+            elif ev == ord("h"):
+                return home(screen)
+            elif ev in (BS, DEL):
+                return results_page(screen, query, events, page_number, result_number)
 
     # max_page = (len(listings) - 1) / PER_PAGE
     # if page_number > max_page or page_number < 0:
