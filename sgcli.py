@@ -25,7 +25,8 @@ PER_PAGE = 10
 
 
 def addstr(win, y, x, s, *args):
-    return win.addstr(y, x, "".join([curses.unctrl(c) for c in s]), *args)
+#    return win.addstr(y, x, "".join([curses.unctrl(c) for c in s]), *args)
+    return win.addstr(y, x, s, *args)
 
 
 def main(stdscr):
