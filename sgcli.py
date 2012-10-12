@@ -65,7 +65,7 @@ def search(stdscr, input=""):
     stdscr.refresh()
 
 
-def loading_thread(screen, ev):
+def loading_thread(screen, ev, message):
     dots = []
     while not ev.is_set():
         dots.append([1, random.randint(1, WIDTH - 2), "."])
@@ -80,14 +80,14 @@ def loading_thread(screen, ev):
         max_y = screen.getmaxyx()[0]
         dots = [d for d in dots if d[0] < max_y - 1]
 
-        centered(screen, 12, "Loading...")
+        centered(screen, 12, message)
         screen.refresh()
         ev.wait(0.1)
 
 
-def loading(screen):
+def loading(screen, message="Loading..."):
     ev = threading.Event()
-    t = threading.Thread(target=loading_thread, args=(screen, ev))
+    t = threading.Thread(target=loading_thread, args=(screen, ev, message))
     t.start()
     return ev
 
@@ -204,15 +204,45 @@ def results_page(stdscr, query, events, page_number, result_number):
 
 
 def event_page(screen, query, events, page_number, result_number):
-#    t = loading(screen)
+    event = events[PER_PAGE * page_number + result_number]
+
+    t = loading(screen, "Searching the web's ticket sites...")
     # TODO error handling
-    res = json.loads(requests.get("http://seatgeek.com/event/listings?id=" + event["id"]).text)
-#    t.set()
-    quit(screen, "DONE")
+    res = json.loads(requests.get("http://seatgeek.com/event/listings?id=%d" % event["id"]).text)
+    t.set()
 
     listings = res["listings"]
 
-    
+    screen.clear()
+    screen.border()
+
+    centered(screen, 1, event["title"])
+
+    dt = datetime.datetime.strptime(event["datetime_local"], "%Y-%m-%dT%H:%M:%S")
+    if dt.hour == 3 and dt.minute == 30:
+        time_str = "Time TBD"
+    else:
+        time_str = dt.strftime("%I:%M %p")
+    date_str = dt.strftime("%%a %%b %d" % dt.day) + ", " + time_str
+    byline = date_str + " - " + event["venue"]["name"]
+    state = event["venue"]["state"]
+    if not state or event["venue"]["country"] != "US":
+        state = event["venue"]["country"]
+    byline += ", " + state
+    centered(screen, 2, byline)
+
+    # max_page = (len(listings) - 1) / PER_PAGE
+    # if page_number > max_page or page_number < 0:
+    #     raise Exception("Bad page # %s" % page_number)
+
+    # centered(stdscr, 2, "Search results for '%s' (%s/%s)" % (query, page_number + 1, max_page + 1))
+
+    # i = 0
+    # for event in events[page_number * PER_PAGE:(page_number + 1) * PER_PAGE]:
+    #     draw_event(stdscr, event, i, i == result_number)
+    #     i += 1
+
+    screen.refresh()
 
     while True:
         ev = screen.getch()
