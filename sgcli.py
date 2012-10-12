@@ -33,8 +33,9 @@ def main(stdscr):
     curses.curs_set(0)
     curses.init_pair(1, curses.COLOR_BLUE, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
-    curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-    curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
+    curses.init_pair(3, curses.COLOR_CYAN, curses.COLOR_BLACK)
+    curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+    curses.init_pair(5, curses.COLOR_RED, curses.COLOR_BLACK)
 
     home(stdscr)
 
@@ -288,12 +289,12 @@ def draw_listing(screen, listing, row, highlight):
     attrs = 0
     if highlight:
         attrs = curses.A_REVERSE
-    elif listing["b"] < 2:
+    elif listing["b"] in (0, 1):
         attrs = curses.color_pair(2)
-    elif listing["b"] < 3:
-        attrs = curses.color_pair(3)
-    else:
+    elif listing["b"] == 2:
         attrs = curses.color_pair(4)
+    else:
+        attrs = curses.color_pair(5)
 
     screen.addstr(5 + 2 * row, 2, " " * (WIDTH - 4), attrs)
     screen.addstr(5 + 2 * row, 3, "(%d)" % listing["dq"], attrs)
@@ -326,7 +327,7 @@ def listings_page(previous_args, screen, event, listings, page_number, result_nu
         elif ev == ord("h"):
             return home(screen)
         elif ev in (BS, DEL):
-            return event_page(*previous_args)
+            return results_page(*previous_args)
         elif ev in DOWN_KEYS:
             if (result_number < PER_PAGE_2 - 1) and (PER_PAGE_2 * page_number + result_number < len(listings) - 1):
                 result_number += 1
