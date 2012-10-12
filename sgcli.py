@@ -23,9 +23,11 @@ def main(stdscr):
     global WIDTH
     global HEIGHT
     global PER_PAGE
+    global PER_PAGE_2
 
     HEIGHT, WIDTH = stdscr.getmaxyx()
     PER_PAGE = (HEIGHT - 4) / 3
+    PER_PAGE_2 = (HEIGHT - 5) / 2
 
     stdscr.keypad(1)
     curses.curs_set(0)
@@ -202,15 +204,7 @@ def results_page(stdscr, query, events, page_number, result_number):
             return event_page(stdscr, query, events, page_number, result_number)
 
 
-def event_page(screen, query, events, page_number, result_number):
-    event = events[PER_PAGE * page_number + result_number]
-
-    t = loading(screen, "Searching the web's ticket sites...")
-    # TODO error handling
-    res = json.loads(requests.get("http://seatgeek.com/event/listings?id=%d" % event["id"]).text)
-    listings = res["listings"]
-    t.set()
-
+def draw_event_header(screen, event):
     screen.clear()
     screen.border()
 
@@ -229,7 +223,18 @@ def event_page(screen, query, events, page_number, result_number):
     byline += ", " + state
     centered(screen, 2, byline)
 
+
+def event_page(screen, query, events, page_number, result_number):
+    event = events[PER_PAGE * page_number + result_number]
+
+    t = loading(screen, "Searching the web's ticket sites...")
+    # TODO error handling
+    res = json.loads(requests.get("http://seatgeek.com/event/listings?id=%d" % event["id"]).text)
+    listings = res["listings"]
+    t.set()
+
     if not listings:
+        draw_event_header(screen, event)
         centered(screen, 4, "Shoot. No listings found :(. Here's a bunny.")
         centered(screen, 6, "                          +MM0^            ")
         centered(screen, 7, "                           +MMMM1          ")
@@ -263,16 +268,45 @@ def event_page(screen, query, events, page_number, result_number):
             elif ev in (BS, DEL):
                 return results_page(screen, query, events, page_number, result_number)
 
-    # max_page = (len(listings) - 1) / PER_PAGE
-    # if page_number > max_page or page_number < 0:
-    #     raise Exception("Bad page # %s" % page_number)
+    listings = grouped(listings)
+    previous_args = [screen, query, events, page_number, result_number]
+    return listings_page(previous_args, screen, event, listings, 0, 0)
 
-    # centered(stdscr, 2, "Search results for '%s' (%s/%s)" % (query, page_number + 1, max_page + 1))
 
-    # i = 0
-    # for event in events[page_number * PER_PAGE:(page_number + 1) * PER_PAGE]:
-    #     draw_event(stdscr, event, i, i == result_number)
-    #     i += 1
+def grouped(listings):
+    grouped = {}
+    for l in listings:
+        key = l.get("mk") or "%s_%s" % (l["s"], l["r"])
+        # TODO if quantity has been filtered use that instead
+        key += "--%s" % l["q"]
+        if key not in grouped:
+            grouped[key] = l
+    return sorted(grouped.values(), key=lambda x: x["dq"], reverse=True)
+
+
+def draw_listing(screen, listing, row, highlight):
+    attrs = 0
+    if highlight:
+        attrs = curses.A_REVERSE
+
+    screen.addstr(5 + 2 * row, 2, str(listing["dq"]), attrs)
+    screen.addstr(5 + 2 * row, 5, (listing["s"] + " - row " + listing["r"]).title(), attrs)
+    screen.addstr(5 + 2 * row, WIDTH - 14, pad(str(listing["q"]), 2, True) + pad((listing["et"] and " etix" or " tix"), 7), attrs)
+    screen.addstr(5 + 2 * row, WIDTH - 6, pad("$" + str(listing["pf"]), 4, True), attrs)
+
+
+def listings_page(previous_args, screen, event, listings, page_number, result_number):
+    max_page = (len(listings) - 1) / PER_PAGE_2
+    if page_number > max_page or page_number < 0:
+        raise Exception("Bad page # %s" % page_number)
+
+    draw_event_header(screen, event)
+    centered(screen, 3, "(%s/%s)" % (page_number + 1, max_page + 1))
+
+    i = 0
+    for listing in listings[page_number * PER_PAGE_2:(page_number + 1) * PER_PAGE_2]:
+        draw_listing(screen, listing, i, i == result_number)
+        i += 1
 
     screen.refresh()
 
@@ -285,7 +319,7 @@ def event_page(screen, query, events, page_number, result_number):
         elif ev == ord("h"):
             return home(screen)
         elif ev in (BS, DEL):
-            return results_page(screen, query, events, page_number, result_number)
+            return event_page(*previous_args)
 
 
 def draw_logo(stdscr):
