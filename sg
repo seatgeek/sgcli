@@ -22,16 +22,12 @@ from PIL import (Image,
 import requests
 
 
-# TODO presentation, price filtering, autocomplete, oauth/columbus?
-
-
 WIDTH = 80
 HEIGHT = 25
 PER_PAGE = 10
 
 
 def addstr(win, y, x, s, *args):
-#    return win.addstr(y, x, "".join([curses.unctrl(c) for c in s]), *args)
     return win.addstr(y, x, s, *args)
 
 
