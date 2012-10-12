@@ -14,24 +14,25 @@ import time
 import requests
 
 
-# MAIN_WINDOW = 0
-# RECOMMENDATIONS = 1
-# SEARCH = 2
-# EVENT_SEARCH = 3
-# PERFORMER_SEARCH = 4
-# VENUE_SEARCH = 5
-# BROWSE NFL, etc
-
-
 WIDTH = 80
+HEIGHT = 25
+PER_PAGE = 10
 
 
 def main(stdscr):
+    global WIDTH
+    global HEIGHT
+    global PER_PAGE
+
+    HEIGHT, WIDTH = stdscr.getmaxyx()
+    PER_PAGE = (HEIGHT - 4) / 3
+
     stdscr.keypad(1)
     curses.curs_set(0)
     curses.init_pair(1, curses.COLOR_BLUE, curses.COLOR_BLACK)
 
     home(stdscr)
+
 
 def centered(win, y, message, *args):
     win.addstr(y, (WIDTH - len(message)) / 2, message, *args)
@@ -77,8 +78,7 @@ def loading_thread(screen, ev, message):
         for dot in dots:
             screen.addstr(dot[0], dot[1], dot[2])
             dot[0] += 1
-        max_y = screen.getmaxyx()[0]
-        dots = [d for d in dots if d[0] < max_y - 1]
+        dots = [d for d in dots if d[0] < HEIGHT - 1]
 
         centered(screen, 12, message)
         screen.refresh()
@@ -131,18 +131,17 @@ def draw_event(scr, event, row, highlight):
     else:
         time_str = pad(dt.strftime("%I:%M %p"), 10, True)
 
-    scr.addstr(4 + 2 * row, 2, date_str, attrs)
-    scr.addstr(5 + 2 * row, 2, time_str, attrs)
-    scr.addstr(4 + 2 * row, 13, pad(event["title"], 65), attrs)
+    scr.addstr(4 + 3 * row, 2, date_str, attrs)
+    scr.addstr(5 + 3 * row, 2, time_str, attrs)
+    scr.addstr(4 + 3 * row, 13, pad(event["title"], WIDTH - 15), attrs)
     byline = "  " + event["venue"]["name"]
     state = event["venue"]["state"]
     if not state or event["venue"]["country"] != "US":
         state = event["venue"]["country"]
     byline += " - " + event["venue"]["city"] + ", " + state
-    scr.addstr(5 + 2 * row, 13, pad(byline, 65), attrs)
+    scr.addstr(5 + 3 * row, 13, pad(byline, WIDTH - 15), attrs)
 
 
-PER_PAGE = 10
 DOWN_KEYS = (ord("n"), ord("k"), curses.KEY_DOWN, 14) # 14 is ^n
 UP_KEYS = (ord("p"), ord("j"), curses.KEY_UP, 16) # 16 is ^p
 LEFT_KEYS = (ord("b"), ord("h"), curses.KEY_LEFT, 2) # 2 is ^b
@@ -208,10 +207,12 @@ def event_page(screen, query, events, page_number, result_number):
 
     t = loading(screen, "Searching the web's ticket sites...")
     # TODO error handling
-    res = json.loads(requests.get("http://seatgeek.com/event/listings?id=%d" % event["id"]).text)
+#    res = json.loads(requests.get("http://seatgeek.com/event/listings?id=%d" % event["id"]).text)
+#    listings = res["listings"]
+    listings = []
+    time.sleep(0.5)
     t.set()
 
-    listings = res["listings"]
 
     screen.clear()
     screen.border()
@@ -230,6 +231,26 @@ def event_page(screen, query, events, page_number, result_number):
         state = event["venue"]["country"]
     byline += ", " + state
     centered(screen, 2, byline)
+
+    if not listings:
+        centered(screen, 4, "Shoot. No listings found :(. Here's a bunny.")
+        centered(screen, 6, "                          +MM0^            ")
+        centered(screen, 7, "                           +MMMM1          ")
+        centered(screen, 8, "                           0MMNMM+         ")
+        centered(screen, 9, "                           +MMMNNN         ")
+        centered(screen, 10, "              ^^++++^^      1MMM0N1++^     ")
+        centered(screen, 11, "         +1o00000o00000oooo1+oMM000MM00o^  ")
+        centered(screen, 12, "       10000o000000000oo000oo00MNNMMMM000+ ")
+        centered(screen, 13, "     o000oo0o00o0000o0000000o0000MMMMN0000+")
+        centered(screen, 14, "   +0000000000000000oo000000000000NNN0000N0")
+        centered(screen, 15, "  +000000NMMMMMNN00000000000000NN00000000o^")
+        centered(screen, 16, "  0000MMMMMMMMMMMMMN00000000000MMNNMo1+^^  ")
+        centered(screen, 17, "  0000MMMMMN000000NNNo000000000NMM1+       ")
+        centered(screen, 18, "  100000000000000000NN00ooo000001^         ")
+        centered(screen, 19, " 1o0000o00000000000000N000000N+            ")
+        centered(screen, 20, "NMMMM0o00000000000000000000MM0             ")
+        centered(screen, 21, "+o0MMMoo000000000000000000NNMNo1^          ")
+        centered(screen, 22, "      ^o000000000o000ooooo0000NM0          ")
 
     # max_page = (len(listings) - 1) / PER_PAGE
     # if page_number > max_page or page_number < 0:
