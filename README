@@ -59,6 +59,9 @@ navigation or the arrow keys:
 
 When you've found a result you like, hit the ENTER key to advance.
 
+Use the number keys to select a specific quantity of tickets you're
+searching for ('0' for all listings).
+
 When you get to a listing page, you can hit 'b' or 'w' to buy the
 ticket(s). 'b' will attempt to open the market page in a text-mode
 browser, while 'w' will use the default browser.

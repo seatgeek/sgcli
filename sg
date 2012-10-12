@@ -22,7 +22,7 @@ from PIL import (Image,
 import requests
 
 
-# TODO presentation, quantity filtering, autocomplete, oauth/columbus?
+# TODO presentation, price filtering, autocomplete, oauth/columbus?
 
 
 WIDTH = 80
@@ -291,17 +291,18 @@ def event_page(screen, query, events, page_number, result_number):
             elif ev in (BS, DEL):
                 return results_page(screen, query, events, page_number, result_number)
 
-    listings = grouped(listings)
     previous_args = [screen, query, events, page_number, result_number]
     return listings_page(previous_args, screen, event, listings, 0, 0)
 
 
-def grouped(listings):
+def grouped(listings, fixed_quantity=0):
     grouped = {}
     for l in listings:
+        if fixed_quantity and fixed_quantity not in l.get("sp", []):
+            continue
         key = l.get("mk") or "%s_%s" % (l["s"], l["r"])
-        # TODO if quantity has been filtered use that instead
-        key += "--%s" % l["q"]
+        if not fixed_quantity:
+            key += "--%s" % l["q"]
         if key not in grouped:
             grouped[key] = l
     return sorted(grouped.values(), key=lambda x: x.get("dq"), reverse=True)
@@ -319,20 +320,26 @@ def draw_listing(screen, listing, row, highlight):
         attrs = curses.color_pair(5)
 
     addstr(screen, 5 + 2 * row, 2, " " * (WIDTH - 4), attrs)
-    if "dq" in listing:
+    if listing.get("dq"):
         addstr(screen, 5 + 2 * row, 3, "(%d)" % listing["dq"], attrs)
     addstr(screen, 5 + 2 * row, 8, (listing["s"] + " - row " + listing["r"]).title(), attrs)
     addstr(screen, 5 + 2 * row, WIDTH - 15, pad(str(listing["q"]), 2, True) + pad((listing["et"] and " etix" or " tix"), 7), attrs)
     addstr(screen, 5 + 2 * row, WIDTH - 7, pad("$" + str(listing["pf"]), 4, True), attrs)
 
 
-def listings_page(previous_args, screen, event, listings, page_number, result_number):
+def listings_page(previous_args, screen, event, all_listings, page_number, result_number, quantity=0):
+    flash = ""
+    listings = grouped(all_listings, quantity)
+    if not listings:
+        flash = "No listings for %d tickets available, showing all " % quantity
+        listings = grouped(all_listings, 0)
+
     max_page = (len(listings) - 1) / PER_PAGE_2
     if page_number > max_page or page_number < 0:
         raise Exception("Bad page # %s" % page_number)
 
     draw_event_header(screen, event)
-    centered(screen, 3, "(%s/%s)" % (page_number + 1, max_page + 1))
+    centered(screen, 3, "%s(%s/%s)" % (flash, page_number + 1, max_page + 1))
 
     current_listing = None
     i = 0
@@ -356,6 +363,9 @@ def listings_page(previous_args, screen, event, listings, page_number, result_nu
             return home(screen)
         elif ev in (BS, DEL):
             return results_page(*previous_args)
+        elif ord("9") >= ev and ev >= ord("0"):
+            quantity = ev - ord("0")
+            return listings_page(previous_args, screen, event, all_listings, 0, 0, quantity)
         elif ev in DOWN_KEYS:
             if (result_number < PER_PAGE_2 - 1) and (PER_PAGE_2 * page_number + result_number < len(listings) - 1):
                 result_number += 1
@@ -377,9 +387,9 @@ def listings_page(previous_args, screen, event, listings, page_number, result_nu
             if page_number > 0:
                 page_number -= 1
         elif ev == ord("\n"):
-            previous_args = [previous_args, screen, event, listings, page_number, result_number]
+            previous_args = [previous_args, screen, event, all_listings, page_number, result_number, quantity]
             return listing_page(previous_args, screen, event, current_listing)
-        return listings_page(previous_args, screen, event, listings, page_number, result_number)
+        return listings_page(previous_args, screen, event, all_listings, page_number, result_number, quantity)
 
 
 def which(program):
