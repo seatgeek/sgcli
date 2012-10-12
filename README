@@ -15,6 +15,11 @@ mission. By catering specifically to users without graphics-capable
 computers, we expose a whole new segment of people to the wonders of
 finding tickets with SeatGeek.
 
+Are you serious?
+----------------
+
+I try not to be.
+
 How do I get it?
 ----------------
 
@@ -30,8 +35,7 @@ What are the dependencies?
 SGCLI depends on `requests` for doing internet-ey things and `PIL` for
 rendering images.
 
-Did you do a double-take when I said rendering images? Well, I was
-serious.
+Did you do a double-take when I said rendering images?
 
 How do I use it?
 ----------------
