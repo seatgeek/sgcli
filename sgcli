@@ -22,7 +22,7 @@ from PIL import (Image,
 import requests
 
 
-# TODO presentation, quantity filtering, autocomplete, packaging, oauth/columbus?
+# TODO presentation, quantity filtering, autocomplete, oauth/columbus?
 
 
 WIDTH = 80
