@@ -57,8 +57,19 @@ def centered(win, y, message, *args):
     addstr(win, y, int((WIDTH - len(message)) / 2), message, *args)
 
 
+def autocomplete(kill_switch, query, results):
+    try:
+        res = json.loads(requests.get("http://api.seatgeek.com/2/autocomplete?q=%s&limit=3" % query).text)
+    except:
+        return
+    if kill_switch.is_set():
+        return
+    results[:] = [res]
+
+
 def search(stdscr, input=""):
-    autocomplete_results = None
+    autocomplete_results = []
+    kill_switch = None
 
     stdscr.clear()
     stdscr.border()
@@ -91,6 +102,14 @@ def search(stdscr, input=""):
             return search_results(stdscr, input)
         elif isalnum(ev):
             input += chr(ev)
+
+        # We are going to spawn a new thread, so disable any existing ones
+        if kill_switch:
+            kill_switch.set()
+
+        kill_switch = threading.Event()
+        t = threading.Thread(target=autocomplete, args=(kill_switch, input, autocomplete_results))
+        t.start()
 
 
 def loading_thread(screen, ev, message):
