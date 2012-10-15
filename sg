@@ -57,7 +57,7 @@ def centered(win, y, message, *args):
     addstr(win, y, int((WIDTH - len(message)) / 2), message, *args)
 
 
-def autocomplete(kill_switch, query, results):
+def autocomplete(kill_switch, redraw, query, results):
     try:
         res = json.loads(requests.get("http://api.seatgeek.com/2/autocomplete?q=%s&limit=3" % query).text)
     except:
@@ -65,27 +65,67 @@ def autocomplete(kill_switch, query, results):
     if kill_switch.is_set():
         return
     results[:] = [res]
+    redraw.set()
 
 
 def search(stdscr, input=""):
+    prev_input = ""
     autocomplete_results = []
     kill_switch = None
+    redraw = None
 
     stdscr.clear()
     stdscr.border()
     centered(stdscr, 2, "Enter a performer, event or venue:")
+    addstr(stdscr, 4, WIDTH / 2 - 20, "_" * 40, curses.A_DIM)
+    addstr(stdscr, 4, WIDTH / 2 - 20, input)
     curses.curs_set(2)
+    stdscr.refresh()
+
+    stdscr.nodelay(True)
 
     while True:
-        # Search bar
-        addstr(stdscr, 4, WIDTH / 2 - 20, "_" * 40, curses.A_DIM)
-        addstr(stdscr, 4, WIDTH / 2 - 20, input)
+        if input != prev_input or (redraw and redraw.is_set()):
+            prev_input = input
 
-        if autocomplete_results:
-            raise Exception("TODO, render %r" % autocomplete_results)
+            stdscr.clear()
+            stdscr.border()
+            centered(stdscr, 2, "Enter a performer, event or venue:")
+            addstr(stdscr, 4, WIDTH / 2 - 20, "_" * 40, curses.A_DIM)
+            addstr(stdscr, 4, WIDTH / 2 - 20, input)
 
-        # getch seems to do an implicit refresh, but let's make it explicit
-        stdscr.refresh()
+            if autocomplete_results:
+                events = autocomplete_results[0].get("events", [])
+                performers = autocomplete_results[0].get("performers", [])
+                venues = autocomplete_results[0].get("venues", [])
+                y = 5
+                if events:
+                    addstr(stdscr, y + 1, 2, "Events")
+                    y += 2
+                for event in events:
+                    addstr(stdscr, y, 4, pad(event["title"], WIDTH - 6))
+                    y += 1
+                if performers:
+                    addstr(stdscr, y + 1, 2, "Performers")
+                    y += 2
+                for performer in performers:
+                    addstr(stdscr, y, 4, pad(performer["name"], WIDTH - 6))
+                    y += 1
+                if venues:
+                    addstr(stdscr, y + 1, 2, "Venues")
+                    y += 2
+                for venue in venues:
+                    state = venue["state"]
+                    if not state or venue["country"] != "US":
+                        state = venue["country"]
+                    addstr(stdscr, y, 4, pad("%s - %s, %s" % (venue["name"],
+                                                              venue["city"],
+                                                              venue["state"]),
+                                             WIDTH - 6))
+                    y += 1
+
+            # getch seems to do an implicit refresh, but let's make it explicit
+            stdscr.refresh()
 
         ev = stdscr.getch()
         if ev == SP:
@@ -95,21 +135,27 @@ def search(stdscr, input=""):
         elif ev in (BS, DEL):
             input = input[:-1]
         elif ev == ESC:
+            stdscr.nodelay(False)
             curses.curs_set(0)
             return home(stdscr)
         elif ev == ord("\n"):
+            stdscr.nodelay(False)
             curses.curs_set(0)
             return search_results(stdscr, input)
         elif isalnum(ev):
             input += chr(ev)
 
-        # We are going to spawn a new thread, so disable any existing ones
-        if kill_switch:
-            kill_switch.set()
+        if input and input != prev_input:
+            # We are going to spawn a new thread, so disable any existing ones
+            if kill_switch:
+                kill_switch.set()
 
-        kill_switch = threading.Event()
-        t = threading.Thread(target=autocomplete, args=(kill_switch, input, autocomplete_results))
-        t.start()
+            kill_switch = threading.Event()
+            redraw = threading.Event()
+            t = threading.Thread(target=autocomplete, args=(kill_switch, redraw, input, autocomplete_results))
+            t.start()
+
+        time.sleep(0.01)
 
 
 def loading_thread(screen, ev, message):
