@@ -58,6 +58,8 @@ def centered(win, y, message, *args):
 
 
 def search(stdscr, input=""):
+    autocomplete_results = None
+
     stdscr.clear()
     stdscr.border()
     centered(stdscr, 2, "Enter a performer, event or venue:")
@@ -65,13 +67,21 @@ def search(stdscr, input=""):
 
     while True:
         # Search bar
-        addstr(stdscr, 4, WIDTH / 2 - 20, "_" * 40, curses.A_DIM);
-        addstr(stdscr, 4, WIDTH / 2 - 20, input);
+        addstr(stdscr, 4, WIDTH / 2 - 20, "_" * 40, curses.A_DIM)
+        addstr(stdscr, 4, WIDTH / 2 - 20, input)
+
+        if autocomplete_results:
+            raise Exception("TODO, render %r" % autocomplete_results)
+
+        # getch seems to do an implicit refresh, but let's make it explicit
+        stdscr.refresh()
 
         ev = stdscr.getch()
         if ev == SP:
             input += " "
-        if ev in (BS, DEL):
+        elif ev in (ord(","), ord(".")):
+            input += chr(ev)
+        elif ev in (BS, DEL):
             input = input[:-1]
         elif ev == ESC:
             curses.curs_set(0)
@@ -81,8 +91,6 @@ def search(stdscr, input=""):
             return search_results(stdscr, input)
         elif isalnum(ev):
             input += chr(ev)
-
-    stdscr.refresh()
 
 
 def loading_thread(screen, ev, message):
