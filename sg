@@ -7,7 +7,8 @@ from curses.ascii import (isalnum,
                           BS,
                           DEL,
                           ESC,
-                          SP)
+                          SP,
+                          TAB)
 import datetime
 import json
 import os
@@ -73,6 +74,7 @@ def search(stdscr, input=""):
     autocomplete_results = []
     kill_switch = None
     redraw = None
+    selected_result = None
 
     stdscr.clear()
     stdscr.border()
@@ -85,7 +87,7 @@ def search(stdscr, input=""):
     stdscr.nodelay(True)
 
     while True:
-        if input != prev_input or (redraw and redraw.is_set()):
+        if input != prev_input or (redraw and (redraw == True or redraw.is_set())):
             if input != prev_input:
                 prev_input = input
             else:
@@ -104,25 +106,34 @@ def search(stdscr, input=""):
                     addstr(stdscr, y + 1, 2, "Events")
                     y += 2
                 for event in events:
-                    addstr(stdscr, y, 4, pad(event["title"], WIDTH - 6))
+                    attrs = 0
+                    if selected_result == event:
+                        attrs = curses.A_REVERSE
+                    addstr(stdscr, y, 4, pad(event["title"], WIDTH - 6), attrs)
                     y += 1
                 if performers:
                     addstr(stdscr, y + 1, 2, "Performers")
                     y += 2
                 for performer in performers:
-                    addstr(stdscr, y, 4, pad(performer["name"], WIDTH - 6))
+                    attrs = 0
+                    if selected_result == performer:
+                        attrs = curses.A_REVERSE
+                    addstr(stdscr, y, 4, pad(performer["name"], WIDTH - 6), attrs)
                     y += 1
                 if venues:
                     addstr(stdscr, y + 1, 2, "Venues")
                     y += 2
                 for venue in venues:
+                    attrs = 0
+                    if selected_result == venue:
+                        attrs = curses.A_REVERSE
                     state = venue["state"]
                     if not state or venue["country"] != "US":
                         state = venue["country"]
                     addstr(stdscr, y, 4, pad("%s - %s, %s" % (venue["name"],
                                                               venue["city"],
                                                               venue["state"]),
-                                             WIDTH - 6))
+                                             WIDTH - 6), attrs)
                     y += 1
 
             addstr(stdscr, 4, WIDTH / 2 - 20, "_" * 40, curses.A_DIM)
@@ -131,22 +142,40 @@ def search(stdscr, input=""):
             # getch seems to do an implicit refresh, but let's make it explicit
             stdscr.refresh()
 
+        merged_results = []
+        if autocomplete_results:
+            merged_results = autocomplete_results[0].get("events", []) + autocomplete_results[0].get("performers", []) + autocomplete_results[0].get("venues", [])
+
         ev = stdscr.getch()
         if ev == SP:
+            selected_result = None
             input += " "
-        elif ev in (ord(","), ord(".")):
-            input += chr(ev)
         elif ev in (BS, DEL):
-            input = input[:-1]
+            if selected_result:
+                redraw = True
+                selected_result = None
+            else:
+                input = input[:-1]
         elif ev == ESC:
             stdscr.nodelay(False)
             curses.curs_set(0)
             return home(stdscr)
         elif ev == ord("\n"):
+            if selected_result:
+                raise Exception("TODO: use selected result")
             stdscr.nodelay(False)
             curses.curs_set(0)
             return search_results(stdscr, input)
-        elif isalnum(ev):
+        elif ev == TAB and merged_results:
+            idx = 0
+            for i in range(len(merged_results)):
+                if merged_results[i] == selected_result:
+                    idx = i + 1
+            idx = idx % len(merged_results)
+            redraw = True
+            selected_result = merged_results[idx]
+        elif isalnum(ev) or ev in (ord(","), ord(".")):
+            selected_result = None
             input += chr(ev)
 
         if input and input != prev_input:
