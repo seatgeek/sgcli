@@ -366,7 +366,8 @@ def results_page(stdscr, query, events, page_number, result_number):
             if page_number > 0:
                 page_number -= 1
         elif ev == ord("\n"):
-            return event_page(stdscr, query, events, page_number, result_number)
+            event = events[PER_PAGE * page_number + result_number]
+            return event_page(stdscr, event, results_page, [stdscr, query, events, page_number, result_number])
         return results_page(stdscr, query, events, page_number, result_number)
 
 
@@ -390,9 +391,7 @@ def draw_event_header(screen, event):
     centered(screen, 2, byline)
 
 
-def event_page(screen, query, events, page_number, result_number):
-    event = events[PER_PAGE * page_number + result_number]
-
+def event_page(screen, event, prev_view, prev_args):
     (ev, t) = loading(screen, "Searching the web's ticket sites...")
     try:
         res = json.loads(requests.get("http://seatgeek.com/event/listings?id=%d&calculate_coords=1" % event["id"]).text)
@@ -439,10 +438,9 @@ def event_page(screen, query, events, page_number, result_number):
             elif ev == ord("h"):
                 return home(screen)
             elif ev in (BS, DEL, curses.KEY_BACKSPACE):
-                return results_page(screen, query, events, page_number, result_number)
+                return prev_view(*prev_args)
 
-    previous_args = [screen, query, events, page_number, result_number]
-    return listings_page(previous_args, screen, event, listings, 0, 0)
+    return listings_page(prev_view, prev_args, screen, event, listings, 0, 0)
 
 
 def grouped(listings, fixed_quantity=0):
@@ -477,7 +475,7 @@ def draw_listing(screen, listing, row, highlight):
     addstr(screen, 5 + 2 * row, WIDTH - 7, pad("$" + str(listing["pf"]), 4, True), attrs)
 
 
-def listings_page(previous_args, screen, event, all_listings, page_number, result_number, quantity=0):
+def listings_page(prev_view, prev_args, screen, event, all_listings, page_number, result_number, quantity=0):
     flash = ""
     listings = grouped(all_listings, quantity)
     if not listings:
@@ -514,10 +512,10 @@ def listings_page(previous_args, screen, event, all_listings, page_number, resul
         elif ev == ord("h"):
             return home(screen)
         elif ev in (BS, DEL, curses.KEY_BACKSPACE):
-            return results_page(*previous_args)
+            return prev_view(*prev_args)
         elif ord("9") >= ev and ev >= ord("0"):
             quantity = ev - ord("0")
-            return listings_page(previous_args, screen, event, all_listings, 0, 0, quantity)
+            return listings_page(prev_view, prev_args, screen, event, all_listings, 0, 0, quantity)
         elif ev in DOWN_KEYS:
             if (result_number < PER_PAGE_2 - 1) and (PER_PAGE_2 * page_number + result_number < len(listings) - 1):
                 result_number += 1
@@ -539,9 +537,9 @@ def listings_page(previous_args, screen, event, all_listings, page_number, resul
             if page_number > 0:
                 page_number -= 1
         elif ev == ord("\n"):
-            previous_args = [previous_args, screen, event, all_listings, page_number, result_number, quantity]
+            previous_args = [prev_view, prev_args, screen, event, all_listings, page_number, result_number, quantity]
             return listing_page(previous_args, screen, event, current_listing)
-        return listings_page(previous_args, screen, event, all_listings, page_number, result_number, quantity)
+        return listings_page(prev_view, prev_args, screen, event, all_listings, page_number, result_number, quantity)
 
 
 def which(program):
