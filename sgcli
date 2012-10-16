@@ -217,7 +217,7 @@ def search(stdscr, input=""):
             idx = idx % len(merged_results)
             redraw = True
             selected_result = merged_results[idx]
-        elif isalnum(ev) or ev in (ord(","), ord("."), ord("-")):
+        elif isalnum(ev) or ev in (ord(","), ord("."), ord("-"), ord("!"), ord("&")):
             selected_result = None
             input += chr(ev)
 
