@@ -10,6 +10,7 @@ from curses.ascii import (isalnum,
                           SP,
                           TAB)
 import datetime
+import itertools
 import json
 import os
 import random
@@ -631,21 +632,17 @@ def listing_page(previous_args, screen, event, listing):
 
     link = "http://seatgeek.com/event/click/?tid=%s&eid=%s&section=%s&row=%s&quantity=%s&price=%s&baseprice=%s&market=%s&sg=0&dq=%s" % (listing["id"], event["id"], listing["s"], listing.get("r", "none"), listing["q"], listing["pf"], listing["p"], listing["m"], listing.get("dq",0))
 
-    while True:
-        ev = screen.getch()
-        if ev == ord("q"):
-            return confirm_quit(screen)
-        elif ev == ESC:
-            return quit(screen)
-        elif ev == ord("s"):
-            return search(screen)
-        elif ev == ord("h"):
-            return home(screen)
-        elif ev in (BS, DEL):
-            return listings_page(*previous_args)
-        elif ev in (ord("b"), ord("w")):
-            browse(link, ev == ord("b"))
-            return post_purchase(screen, previous_args)
+    def open_browser(use_links):
+        browse(link, use_links)
+        return post_purchase(screen, previous_args)
+
+    return act_on_input(screen, {"q": confirm_quit,
+                                 ESC: quit,
+                                 "s": search,
+                                 "h": home,
+                                 (BS, DEL): [listings_page] + previous_args,
+                                 "b": [open_browser, True],
+                                 "w": [open_browser, False]})
 
 
 def post_purchase(screen, previous_args):
@@ -741,12 +738,7 @@ def confirm_quit(screen):
     centered(screen, 24, "Quit? (y/n)")
     screen.refresh()
 
-    while True:
-        ev = screen.getch()
-        if ev == ord("y"):
-            return quit(screen)
-        elif ev == ord("n"):
-            return home(screen)
+    return act_on_input(screen, {"y": quit, "n": home})
 
 
 def quit(stdscr, message=None):
@@ -766,6 +758,23 @@ def browse(uri, prefer_links=True):
         webbrowser.open(uri)
 
 
+def act_on_input(screen, actions):
+    def key(k):
+        if isinstance(k, str):
+            return [ord(k)]
+        if isinstance(k, (list, tuple)):
+            return list(itertools.chain.from_iterable(key(l) for l in k))
+        return [k]
+
+    while True:
+        ev = screen.getch()
+        for k,v in actions.iteritems():
+            if ev in key(k):
+                if isinstance(v, list):
+                    return v[0](*v[1:])
+                return v(screen)
+
+
 def home(stdscr):
     stdscr.clear()
     stdscr.border()
@@ -774,14 +783,9 @@ def home(stdscr):
     centered(stdscr, 20, "(s) search  (q/ESC) quit")
     stdscr.refresh()
 
-    while True:
-        ev = stdscr.getch()
-        if ev == ord("q"):
-            return confirm_quit(stdscr)
-        elif ev == ESC:
-            return quit(stdscr)
-        elif ev == ord("s"):
-            return search(stdscr)
+    return act_on_input(stdscr, {"q": confirm_quit,
+                                 ESC: quit,
+                                 "s": search})
 
 
 if __name__ == "__main__":
