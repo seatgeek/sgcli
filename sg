@@ -132,12 +132,23 @@ def search(stdscr, input=""):
                         state = venue["country"]
                     addstr(stdscr, y, 4, pad("%s - %s, %s" % (venue["name"],
                                                               venue["city"],
-                                                              venue["state"]),
+                                                              state),
                                              WIDTH - 6), attrs)
                     y += 1
 
             addstr(stdscr, 4, WIDTH / 2 - 20, "_" * 40, curses.A_DIM)
-            addstr(stdscr, 4, WIDTH / 2 - 20, input)
+            query = input
+            if selected_result:
+                if selected_result.get("city"):
+                    state = selected_result["state"]
+                    if not state or selected_result["country"] != "US":
+                        state = selected_result["country"]
+                    query = "%s - %s, %s" % (selected_result["name"],
+                                             selected_result["city"],
+                                             state)
+                else:
+                    query = selected_result.get("title", selected_result.get("name"))
+            addstr(stdscr, 4, WIDTH / 2 - 20, query)
 
             # getch seems to do an implicit refresh, but let's make it explicit
             stdscr.refresh()
@@ -161,11 +172,9 @@ def search(stdscr, input=""):
             curses.curs_set(0)
             return home(stdscr)
         elif ev == ord("\n"):
-            if selected_result:
-                raise Exception("TODO: use selected result")
             stdscr.nodelay(False)
             curses.curs_set(0)
-            return search_results(stdscr, input)
+            return search_results(stdscr, query)
         elif ev == TAB and merged_results:
             idx = 0
             for i in range(len(merged_results)):
@@ -174,7 +183,7 @@ def search(stdscr, input=""):
             idx = idx % len(merged_results)
             redraw = True
             selected_result = merged_results[idx]
-        elif isalnum(ev) or ev in (ord(","), ord(".")):
+        elif isalnum(ev) or ev in (ord(","), ord("."), ord("-")):
             selected_result = None
             input += chr(ev)
 
