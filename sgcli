@@ -14,6 +14,7 @@ import itertools
 import json
 import os
 import random
+import re
 import subprocess
 import threading
 import time
@@ -575,7 +576,8 @@ def listing_page(previous_args, screen, event, listing):
                                                               listing.get("r", "none").title()))
     centered(screen, 5, "$%s base + $%s fees & shipping = $%s each. (b)uy on %s" % (listing["p"], listing["pf"] - listing["p"], listing["pf"], listing["m"]))
     if listing["d"]:
-        centered(screen, 6, listing["d"][:WIDTH-2])
+        description = re.sub('<[^<]+?>', '', listing["d"])
+        centered(screen, 6, description[:WIDTH-2])
 
     if ga:
         centered(screen, 12, "General Admission Show")
