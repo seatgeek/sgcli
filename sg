@@ -79,8 +79,8 @@ def search(stdscr, input=""):
     stdscr.clear()
     stdscr.border()
     centered(stdscr, 2, "Enter a performer, event or venue:")
-    addstr(stdscr, 4, WIDTH / 2 - 20, "_" * 40, curses.A_DIM)
-    addstr(stdscr, 4, WIDTH / 2 - 20, input)
+    addstr(stdscr, 4, WIDTH / 2 - 30, "_" * 60, curses.A_DIM)
+    addstr(stdscr, 4, WIDTH / 2 - 30, input[:60])
     curses.curs_set(2)
     stdscr.refresh()
 
@@ -136,7 +136,7 @@ def search(stdscr, input=""):
                                              WIDTH - 6), attrs)
                     y += 1
 
-            addstr(stdscr, 4, WIDTH / 2 - 20, "_" * 40, curses.A_DIM)
+            addstr(stdscr, 4, WIDTH / 2 - 30, "_" * 60, curses.A_DIM)
             query = input
             if selected_result:
                 if selected_result.get("city"):
@@ -148,7 +148,7 @@ def search(stdscr, input=""):
                                              state)
                 else:
                     query = selected_result.get("title", selected_result.get("name"))
-            addstr(stdscr, 4, WIDTH / 2 - 20, query)
+            addstr(stdscr, 4, WIDTH / 2 - 30, query[:60])
 
             # getch seems to do an implicit refresh, but let's make it explicit
             stdscr.refresh()
