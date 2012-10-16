@@ -29,6 +29,15 @@ PER_PAGE = 10
 
 
 def addstr(win, y, x, s, *args):
+    # Bounds checking
+    y = max(0, y)
+    x = max(0, x)
+    if y >= HEIGHT:
+        return
+    if x >= WIDTH:
+        return
+    s = s[:WIDTH - x - 1]
+
     return win.addstr(y, x, s, *args)
 
 
@@ -39,8 +48,8 @@ def main(stdscr):
     global PER_PAGE_2
 
     HEIGHT, WIDTH = stdscr.getmaxyx()
-    PER_PAGE = (HEIGHT - 4) / 3
-    PER_PAGE_2 = (HEIGHT - 5) / 2
+    PER_PAGE = max((HEIGHT - 4) / 3, 1)
+    PER_PAGE_2 = max((HEIGHT - 5) / 2, 1)
 
     stdscr.keypad(1)
     curses.curs_set(0)
@@ -660,15 +669,15 @@ def post_purchase(screen, previous_args):
         dots = [d for d in dots if d[1] > 1]
 
         trail_length = (WIDTH - 10) / 4
-        screen.addstr(10, 2, (i % 4 < 2 and "-_" or "_-") * trail_length, curses.color_pair(5))
-        screen.addstr(11, 2, (i % 4 < 2 and "-_" or "_-") * trail_length, curses.color_pair(4))
-        screen.addstr(12, 2, (i % 4 < 2 and "-_" or "_-") * trail_length, curses.color_pair(2))
-        screen.addstr(13, 2, (i % 4 < 2 and "-_" or "_-") * trail_length, curses.color_pair(1))
-        screen.addstr(10, 2 + trail_length * 2, ",------,")
-        screen.addstr(11, 2 + trail_length * 2, "|   /\\_/\\")
-        screen.addstr(12, 2 + trail_length * 2, "|__( ^ .^)")
-        screen.addstr(13, 4 - (i % 3) + trail_length * 2, "\"\"  \"\"")
-        screen.addstr(11 + (i % 6 / 3), 1 + trail_length * 2, "~")
+        addstr(screen, 10, 2, (i % 4 < 2 and "-_" or "_-") * trail_length, curses.color_pair(5))
+        addstr(screen, 11, 2, (i % 4 < 2 and "-_" or "_-") * trail_length, curses.color_pair(4))
+        addstr(screen, 12, 2, (i % 4 < 2 and "-_" or "_-") * trail_length, curses.color_pair(2))
+        addstr(screen, 13, 2, (i % 4 < 2 and "-_" or "_-") * trail_length, curses.color_pair(1))
+        addstr(screen, 10, 2 + trail_length * 2, ",------,")
+        addstr(screen, 11, 2 + trail_length * 2, "|   /\\_/\\")
+        addstr(screen, 12, 2 + trail_length * 2, "|__( ^ .^)")
+        addstr(screen, 13, 4 - (i % 3) + trail_length * 2, "\"\"  \"\"")
+        addstr(screen, 11 + (i % 6 / 3), 1 + trail_length * 2, "~")
 
         centered(screen, 5, "Thanks for using SeatGeek! Enjoy the event!")
         centered(screen, 6, "(BKSP) back  (s) search  (h) home  (q) quit")
