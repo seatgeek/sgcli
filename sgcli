@@ -191,7 +191,7 @@ def search(stdscr, input=""):
             stdscr.nodelay(False)
             curses.curs_set(0)
             return search_results(stdscr, query)
-        elif ev == TAB and merged_results:
+        elif ev in (TAB, curses.KEY_DOWN, 14) and merged_results:
             idx = 0
             for i in range(len(merged_results)):
                 if merged_results[i] == selected_result:
@@ -199,7 +199,7 @@ def search(stdscr, input=""):
             idx = idx % len(merged_results)
             redraw = True
             selected_result = merged_results[idx]
-        elif ev == curses.KEY_BTAB and merged_results:
+        elif ev in (curses.KEY_BTAB, curses.KEY_UP, 16) and merged_results:
             idx = 0
             for i in range(len(merged_results)):
                 if merged_results[i] == selected_result:
@@ -464,7 +464,7 @@ def draw_listing(screen, listing, row, highlight):
     addstr(screen, 5 + 2 * row, 2, " " * (WIDTH - 4), attrs)
     if listing.get("dq"):
         addstr(screen, 5 + 2 * row, 3, "(%d)" % listing["dq"], attrs)
-    addstr(screen, 5 + 2 * row, 8, (listing["s"] + " - row " + listing.get("r", "none")).title(), attrs)
+    addstr(screen, 5 + 2 * row, 8, ("section " + listing["s"] + " - row " + listing.get("r", "none")).title(), attrs)
     addstr(screen, 5 + 2 * row, WIDTH - 15, pad(str(listing["q"]), 2, True) + pad((listing["et"] and " etix" or " tix"), 7), attrs)
     addstr(screen, 5 + 2 * row, WIDTH - 7, pad("$" + str(listing["pf"]), 4, True), attrs)
 
