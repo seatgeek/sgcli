@@ -84,6 +84,7 @@ def autocomplete(kill_switch, redraw, query, results):
 
 
 def search(stdscr, input=""):
+    query = input
     prev_input = ""
     autocomplete_results = []
     kill_switch = None
