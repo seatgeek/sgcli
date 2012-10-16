@@ -9,5 +9,5 @@ setup(name='SG',
       author_email='mike@dirolf.com',
       url='http://github.com/mdirolf/sgcli',
       scripts=['sg'],
-      install_requires=["PIL", "requests"],
+      install_requires=["pillow", "requests"],
       )

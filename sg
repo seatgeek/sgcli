@@ -596,47 +596,50 @@ def listing_page(previous_args, screen, event, listing):
         else:
             width, height = max_height * 20 / 9, max_height
 
-        img = Image.open(cStringIO.StringIO(map_image.content))
-        characters = "#X=*+-. "
-        bounds = [32, 64, 96, 128, 160, 192, 224]
+        try:
+            img = Image.open(cStringIO.StringIO(map_image.content))
+            characters = "#X=*+-. "
+            bounds = [32, 64, 96, 128, 160, 192, 224]
 
-        img = img.resize((width, height),Image.BILINEAR)
-        bw = img.copy()
-        bw = bw.convert("L") # convert to mono
+            img = img.resize((width, height),Image.BILINEAR)
+            bw = img.copy()
+            bw = bw.convert("L") # convert to mono
 
-        img = ImageOps.posterize(img.convert("RGB"), 1)
+            img = ImageOps.posterize(img.convert("RGB"), 1)
 
-        start_x = (WIDTH - width) / 2
-        for y in range(0, img.size[1]):
-            str=""
-            for x in range(0, img.size[0]):
-                lum = 255 - bw.getpixel((x,y))
-                c = characters[bisect.bisect(bounds, lum)]
-                color_num={(0,0,0): 0,
-                           (0,0,128): 1,
-                           (0,128,0): 2,
-                           (0,128,128): 3,
-                           (128,0,0): 5,
-                           (128,0,128): 6,
-                           (128,128,0): 4,
-                           (128,128,128): 0}[img.getpixel((x,y))]
-                addstr(screen, 8 + y, start_x + x, c, curses.color_pair(color_num))
-                str += c
+            start_x = (WIDTH - width) / 2
+            for y in range(0, img.size[1]):
+                str=""
+                for x in range(0, img.size[0]):
+                    lum = 255 - bw.getpixel((x,y))
+                    c = characters[bisect.bisect(bounds, lum)]
+                    color_num={(0,0,0): 0,
+                               (0,0,128): 1,
+                               (0,128,0): 2,
+                               (0,128,128): 3,
+                               (128,0,0): 5,
+                               (128,0,128): 6,
+                               (128,128,0): 4,
+                               (128,128,128): 0}[img.getpixel((x,y))]
+                    addstr(screen, 8 + y, start_x + x, c, curses.color_pair(color_num))
+                    str += c
 
-        # Draw the marker
-        x = width * listing["co"]["x"] / 1000 + start_x
-        y = height * listing["co"]["y"] / 1000 + 8
-        addstr(screen, y, x, "O", curses.color_pair(1))
+            # Draw the marker
+            x = width * listing["co"]["x"] / 1000 + start_x
+            y = height * listing["co"]["y"] / 1000 + 8
+            addstr(screen, y, x, "O", curses.color_pair(1))
 
-        addstr(screen, y, x+1, "|", curses.color_pair(1))
-        addstr(screen, y, x-1, "|", curses.color_pair(1))
-        addstr(screen, y+1, x+1, "/", curses.color_pair(1))
-        addstr(screen, y+1, x-1, "\\", curses.color_pair(1))
-        addstr(screen, y-1, x+1, "\\", curses.color_pair(1))
-        addstr(screen, y-1, x-1, "/", curses.color_pair(1))
-        addstr(screen, y-1, x, " ", curses.color_pair(1))
-        addstr(screen, y-2, x, "_", curses.color_pair(1))
-        addstr(screen, y+1, x, "_", curses.color_pair(1))
+            addstr(screen, y, x+1, "|", curses.color_pair(1))
+            addstr(screen, y, x-1, "|", curses.color_pair(1))
+            addstr(screen, y+1, x+1, "/", curses.color_pair(1))
+            addstr(screen, y+1, x-1, "\\", curses.color_pair(1))
+            addstr(screen, y-1, x+1, "\\", curses.color_pair(1))
+            addstr(screen, y-1, x-1, "/", curses.color_pair(1))
+            addstr(screen, y-1, x, " ", curses.color_pair(1))
+            addstr(screen, y-2, x, "_", curses.color_pair(1))
+            addstr(screen, y+1, x, "_", curses.color_pair(1))
+        except:
+            centered(screen, 12, "Error Rendering Map")
 
     screen.refresh()
 
