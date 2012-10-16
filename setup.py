@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='SG',
-      version='1.2',
+      version='1.3',
       description='SeatGeek command line app',
       author='Mike Dirolf',
       author_email='mike@dirolf.com',

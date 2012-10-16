@@ -176,7 +176,7 @@ def search(stdscr, input=""):
             input += " "
         elif ev == curses.KEY_RESIZE:
             set_dimensions(stdscr)
-        elif ev in (BS, DEL):
+        elif ev in (BS, DEL, curses.KEY_BACKSPACE):
             if selected_result:
                 redraw = True
                 selected_result = None
@@ -326,7 +326,7 @@ def results_page(stdscr, query, events, page_number, result_number):
             return search(stdscr)
         elif ev == ord("h"):
             return home(stdscr)
-        elif ev in (BS, DEL):
+        elif ev in (BS, DEL, curses.KEY_BACKSPACE):
             return search(stdscr, query)
         elif ev in DOWN_KEYS:
             if (result_number < PER_PAGE - 1) and (PER_PAGE * page_number + result_number < len(events) - 1):
@@ -421,7 +421,7 @@ def event_page(screen, query, events, page_number, result_number):
                 return search(screen)
             elif ev == ord("h"):
                 return home(screen)
-            elif ev in (BS, DEL):
+            elif ev in (BS, DEL, curses.KEY_BACKSPACE):
                 return results_page(screen, query, events, page_number, result_number)
 
     previous_args = [screen, query, events, page_number, result_number]
@@ -496,7 +496,7 @@ def listings_page(previous_args, screen, event, all_listings, page_number, resul
             return search(screen)
         elif ev == ord("h"):
             return home(screen)
-        elif ev in (BS, DEL):
+        elif ev in (BS, DEL, curses.KEY_BACKSPACE):
             return results_page(*previous_args)
         elif ord("9") >= ev and ev >= ord("0"):
             quantity = ev - ord("0")
@@ -653,7 +653,7 @@ def listing_page(previous_args, screen, event, listing):
                                  ESC: quit,
                                  "s": search,
                                  "h": home,
-                                 (BS, DEL): [listings_page] + previous_args,
+                                 (BS, DEL, curses.KEY_BACKSPACE): [listings_page] + previous_args,
                                  "b": [open_browser, True],
                                  "w": [open_browser, False]})
 
@@ -708,7 +708,7 @@ def post_purchase(screen, previous_args):
         elif ev == ord("h"):
             screen.nodelay(False)
             return home(screen)
-        elif ev in (BS, DEL):
+        elif ev in (BS, DEL, curses.KEY_BACKSPACE):
             screen.nodelay(False)
             return listings_page(*previous_args)
 
