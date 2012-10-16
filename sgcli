@@ -198,6 +198,8 @@ def search(stdscr, input=""):
         elif ev == ord("\n"):
             stdscr.nodelay(False)
             curses.curs_set(0)
+            if selected_result and selected_result.get("title"):
+                return event_page(stdscr, selected_result, search, [stdscr, input])
             return search_results(stdscr, query)
         elif ev in (TAB, curses.KEY_DOWN, 14) and merged_results:
             idx = 0
