@@ -2,12 +2,12 @@
 
 from distutils.core import setup
 
-setup(name='SG',
+setup(name='sgcli',
       version='1.3',
       description='SeatGeek command line app',
       author='Mike Dirolf',
       author_email='mike@dirolf.com',
       url='http://github.com/mdirolf/sgcli',
-      scripts=['sg'],
+      scripts=['sgcli'],
       install_requires=["pillow", "requests"],
       )

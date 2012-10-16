@@ -23,10 +23,10 @@ I try not to be.
 How do I get it?
 ----------------
 
-Try `pip install sg` or `easy_install sg`, and then run the command
-`sg`.
+Try `pip install sgcli` or `easy_install sgcli`, and then run the command
+`sgcli`.
 
-Alternatively, just download the `sg` script from this repo and run it
+Alternatively, just download the `sgcli` script from this repo and run it
 directly.
 
 What are the dependencies?
