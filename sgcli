@@ -131,7 +131,15 @@ def search(stdscr, input=""):
                     attrs = 0
                     if selected_result == event:
                         attrs = curses.A_REVERSE
-                    addstr(stdscr, y, 4, pad(event["title"], WIDTH - 6), attrs)
+
+                    dt = datetime.datetime.strptime(event["datetime_local"], "%Y-%m-%dT%H:%M:%S")
+                    date_str = pad(dt.strftime("%%a %%b %d" % dt.day), 10)
+
+                    event_str = "%s - %s - %s" % (event["title"],
+                                                  date_str,
+                                                  event["venue"]["name"])
+
+                    addstr(stdscr, y, 4, pad(event_str, WIDTH - 6), attrs)
                     y += 1
                 if performers:
                     addstr(stdscr, y + 1, 2, "Performers")
