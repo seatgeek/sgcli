@@ -101,6 +101,13 @@ def search(stdscr, input=""):
 
     stdscr.nodelay(True)
 
+    # Handle initial autocomplete for when somebody returns from a search
+    if input:
+        kill_switch = threading.Event()
+        redraw = threading.Event()
+        t = threading.Thread(target=autocomplete, args=(kill_switch, redraw, input, autocomplete_results))
+        t.start()
+
     while True:
         if input != prev_input or (redraw and (redraw == True or redraw.is_set())):
             if input != prev_input:
