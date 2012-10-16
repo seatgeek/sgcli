@@ -251,8 +251,7 @@ def search_results(stdscr, query):
         stdscr.border()
         centered(stdscr, 2, "Search results for '%s'" % query)
         centered(stdscr, 4, "No results :( - any key to search again")
-        stdscr.getch()
-        return search(stdscr)
+        act_on_input(stdscr, search)
 
     return results_page(stdscr, query, events, 0, 0)
 
@@ -768,6 +767,8 @@ def act_on_input(screen, actions):
 
     while True:
         ev = screen.getch()
+        if not isinstance(actions, dict):
+            return actions(screen)
         for k,v in actions.iteritems():
             if ev in key(k):
                 if isinstance(v, list):
