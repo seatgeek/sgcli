@@ -86,13 +86,14 @@ def search(stdscr, input=""):
 
     while True:
         if input != prev_input or (redraw and redraw.is_set()):
-            prev_input = input
+            if input != prev_input:
+                prev_input = input
+            else:
+                redraw = None
 
             stdscr.clear()
             stdscr.border()
             centered(stdscr, 2, "Enter a performer, event or venue:")
-            addstr(stdscr, 4, WIDTH / 2 - 20, "_" * 40, curses.A_DIM)
-            addstr(stdscr, 4, WIDTH / 2 - 20, input)
 
             if autocomplete_results:
                 events = autocomplete_results[0].get("events", [])
@@ -123,6 +124,9 @@ def search(stdscr, input=""):
                                                               venue["state"]),
                                              WIDTH - 6))
                     y += 1
+
+            addstr(stdscr, 4, WIDTH / 2 - 20, "_" * 40, curses.A_DIM)
+            addstr(stdscr, 4, WIDTH / 2 - 20, input)
 
             # getch seems to do an implicit refresh, but let's make it explicit
             stdscr.refresh()
