@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='sgcli',
-      version='1.5',
+      version='1.6',
       description='SeatGeek command line app',
       author='Mike Dirolf',
       author_email='mike@dirolf.com',
