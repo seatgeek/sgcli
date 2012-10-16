@@ -42,16 +42,19 @@ def addstr(win, y, x, s, *args):
     return win.addstr(y, x, s, *args)
 
 
-def main(stdscr):
+def set_dimensions(screen):
     global WIDTH
     global HEIGHT
     global PER_PAGE
     global PER_PAGE_2
 
-    HEIGHT, WIDTH = stdscr.getmaxyx()
+    HEIGHT, WIDTH = screen.getmaxyx()
     PER_PAGE = max((HEIGHT - 4) / 3, 1)
     PER_PAGE_2 = max((HEIGHT - 5) / 2, 1)
 
+
+def main(stdscr):
+    set_dimensions(stdscr)
     stdscr.keypad(1)
     curses.curs_set(0)
     curses.init_pair(1, curses.COLOR_BLUE, curses.COLOR_BLACK)
@@ -171,6 +174,8 @@ def search(stdscr, input=""):
         if ev == SP:
             selected_result = None
             input += " "
+        elif ev == curses.KEY_RESIZE:
+            set_dimensions(stdscr)
         elif ev in (BS, DEL):
             if selected_result:
                 redraw = True
@@ -313,6 +318,8 @@ def results_page(stdscr, query, events, page_number, result_number):
         ev = stdscr.getch()
         if ev == ord("q"):
             return confirm_quit(stdscr)
+        elif ev == curses.KEY_RESIZE:
+            set_dimensions(stdscr)
         elif ev == ESC:
             return quit(stdscr)
         elif ev == ord("s"):
@@ -406,6 +413,8 @@ def event_page(screen, query, events, page_number, result_number):
             ev = screen.getch()
             if ev == ord("q"):
                 return confirm_quit(screen)
+            elif ev == curses.KEY_RESIZE:
+                set_dimensions(screen)
             elif ev == ESC:
                 return quit(screen)
             elif ev == ord("s"):
@@ -479,6 +488,8 @@ def listings_page(previous_args, screen, event, all_listings, page_number, resul
         ev = screen.getch()
         if ev == ord("q"):
             return confirm_quit(screen)
+        elif ev == curses.KEY_RESIZE:
+            set_dimensions(screen)
         elif ev == ESC:
             return quit(screen)
         elif ev == ord("s"):
@@ -683,6 +694,8 @@ def post_purchase(screen, previous_args):
         if ev == ord("q"):
             screen.nodelay(False)
             return confirm_quit(screen)
+        elif ev == curses.KEY_RESIZE:
+            set_dimensions(screen)
         elif ev == ESC:
             screen.nodelay(False)
             return quit(screen)
@@ -767,13 +780,16 @@ def act_on_input(screen, actions):
 
     while True:
         ev = screen.getch()
-        if not isinstance(actions, dict):
+        if ev == curses.KEY_RESIZE:
+            set_dimensions(screen)
+        elif not isinstance(actions, dict):
             return actions(screen)
-        for k,v in actions.iteritems():
-            if ev in key(k):
-                if isinstance(v, list):
-                    return v[0](*v[1:])
-                return v(screen)
+        else:
+            for k,v in actions.iteritems():
+                if ev in key(k):
+                    if isinstance(v, list):
+                        return v[0](*v[1:])
+                    return v(screen)
 
 
 def home(stdscr):
