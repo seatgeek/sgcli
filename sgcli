@@ -199,6 +199,14 @@ def search(stdscr, input=""):
             idx = idx % len(merged_results)
             redraw = True
             selected_result = merged_results[idx]
+        elif ev == curses.KEY_BTAB and merged_results:
+            idx = 0
+            for i in range(len(merged_results)):
+                if merged_results[i] == selected_result:
+                    idx = i - 1
+            idx = idx % len(merged_results)
+            redraw = True
+            selected_result = merged_results[idx]
         elif isalnum(ev) or ev in (ord(","), ord("."), ord("-")):
             selected_result = None
             input += chr(ev)
