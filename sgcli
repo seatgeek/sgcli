@@ -319,8 +319,8 @@ def draw_event(scr, event, row, highlight):
     addstr(scr, 5 + 3 * row, 13, pad(byline, WIDTH - 15), attrs)
 
 
-DOWN_KEYS = (ord("n"), ord("k"), curses.KEY_DOWN, 14) # 14 is ^n
-UP_KEYS = (ord("p"), ord("j"), curses.KEY_UP, 16) # 16 is ^p
+DOWN_KEYS = (ord("n"), ord("j"), curses.KEY_DOWN, 14) # 14 is ^n
+UP_KEYS = (ord("p"), ord("k"), curses.KEY_UP, 16) # 16 is ^p
 LEFT_KEYS = (ord("b"), ord("h"), curses.KEY_LEFT, 2) # 2 is ^b
 RIGHT_KEYS = (ord("f"), ord("l"), curses.KEY_RIGHT, 6) # 6 is ^f
 
