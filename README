@@ -56,8 +56,8 @@ ESC to go home.
 On pages with data tables, you can navigate using emacs/vim style
 navigation or the arrow keys:
 
-^p / j / UP ARROW: Go up a row
-^n / k / DOWN ARROW: Go down a row
+^p / k / UP ARROW: Go up a row
+^n / j / DOWN ARROW: Go down a row
 ^b / h / LEFT ARROW: Go to the previous page
 ^f / l / RIGHT ARROW: Go to the next page
 
