@@ -404,7 +404,7 @@ def draw_event_header(screen, event):
 def event_page(screen, event, prev_view, prev_args):
     (ev, t) = loading(screen, "Searching the web's ticket sites...")
     try:
-        res = json.loads(requests.get("http://seatgeek.com/event/listings?id=%d&calculate_coords=1" % event["id"]).text)
+        res = json.loads(requests.get("http://seatgeek.com/listings?id=%d&client_id=MTIwNzV8MTM2NTQ1MDQyMg" % event["id"]).text)
         listings = res["listings"]
     except:
         listings = []
@@ -599,7 +599,7 @@ def listing_page(previous_args, screen, event, listing):
                                                               listing["s"].title(),
                                                               listing.get("r", "none").title()))
     centered(screen, 5, "$%s base + $%s fees & shipping = $%s each. (b)uy on %s" % (listing["p"], listing["pf"] - listing["p"], listing["pf"], listing["m"]))
-    if listing["d"]:
+    if listing.get("d"):
         description = re.sub('<[^<]+?>', '', listing["d"])
         centered(screen, 6, description[:WIDTH-2])
 
