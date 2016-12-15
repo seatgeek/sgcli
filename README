@@ -40,6 +40,16 @@ Did you do a double-take when I said rendering images?
 How do I use it?
 ----------------
 
+A client id is required to use sgcli, you can obtain one from
+https://seatgeek.com/account/develop
+
+The client id is passed to the executable as an env variable:
+
+```
+$ CLIENT_ID=XXXXXXXX
+$ sgcli
+```
+
 Like any good command line app, SGCLI is full of obscure keyboard
 shortcuts that aren't really documented. Here are some of them that
 work on most pages:

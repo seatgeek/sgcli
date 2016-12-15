@@ -28,7 +28,10 @@ import requests
 WIDTH = 80
 HEIGHT = 25
 PER_PAGE = 10
+CLIENT_ID = os.environ.get('CLIENT_ID')
 
+if not CLIENT_ID:
+    raise Exception('A client id is required to use this application - please see the README for more info')
 
 def addstr(win, y, x, s, *args):
     # Bounds checking
@@ -74,7 +77,7 @@ def centered(win, y, message, *args):
 
 def autocomplete(kill_switch, redraw, query, results):
     try:
-        res = json.loads(requests.get("http://api.seatgeek.com/2/autocomplete?q=%s&limit=3" % query).text)
+        res = json.loads(requests.get("https://api.seatgeek.com/2/autocomplete?client_id={}&q={}&limit=3".format(CLIENT_ID, query)).text)
     except:
         return
     if kill_switch.is_set():
@@ -271,7 +274,7 @@ def loading(screen, message="Loading..."):
 def search_results(stdscr, query):
     (ev, t) = loading(stdscr)
     try:
-        res = json.loads(requests.get("http://api.seatgeek.com/2/events?per_page=100&q=" + query).text)
+        res = json.loads(requests.get("https://api.seatgeek.com/2/events?client_id={}&per_page=100&q={}".format(CLIENT_ID, query)).text)
         events = res.get("events", [])
     except:
         events = []
